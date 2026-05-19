@@ -7,6 +7,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: callcenter:latest
     container_name: callcenter_app
     restart: unless-stopped
     environment:
@@ -23,6 +24,8 @@ services:
       UPLOAD_MAX_SIZE: "104857600"
     volumes:
       - uploads:/var/www/html/public/assets/uploads
+    ports:
+      - "80:80"
     depends_on:
       db:
         condition: service_healthy
@@ -39,7 +42,6 @@ services:
       MYSQL_USER: crm_user
       MYSQL_PASSWORD: "${DB_PASSWORD:-CrmSecure2024Db}"
       MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-RootSecure2024Db}"
-      MYSQL_CHARSET: utf8mb4
     volumes:
       - db_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
@@ -47,31 +49,15 @@ services:
     command: >
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
-      --sql-mode="STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
+      --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "crm_user", "-p${DB_PASSWORD:-CrmSecure2024Db}"]
-      interval: 10s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-RootSecure2024Db}"]
+      interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 20
+      start_period: 30s
     networks:
       - callcenter_net
-
-  # ── ngrok tunnel ────────────────────────────────────────────
-  ngrok:
-    image: ngrok/ngrok:latest
-    container_name: callcenter_ngrok
-    restart: unless-stopped
-    command: http app:80 --log=stdout
-    environment:
-      NGROK_AUTHTOKEN: "${NGROK_AUTHTOKEN}"
-    ports:
-      - "4040:4040"   # ngrok dashboard
-    depends_on:
-      - app
-    networks:
-      - callcenter_net
-    profiles:
-      - ngrok          # only starts when --profile ngrok is passed
 
 volumes:
   db_data:
@@ -79,4 +65,5 @@ volumes:
 
 networks:
   callcenter_net:
+    name: callcenter_net
     driver: bridge
