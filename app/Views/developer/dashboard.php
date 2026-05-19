@@ -1,0 +1,144 @@
+<!-- E:\call_center\app\Views\developer\dashboard.php -->
+<div class="row g-3 mt-1">
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card kpi-blue">
+            <div class="kpi-icon"><i class="bi bi-kanban"></i></div>
+            <div class="kpi-value"><?= $stats['total_projects'] ?? 0 ?></div>
+            <div class="kpi-label">My Projects</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card kpi-indigo">
+            <div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div class="kpi-value"><?= $stats['in_progress'] ?? 0 ?></div>
+            <div class="kpi-label">In Progress</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card <?= ($stats['overdue'] ?? 0) > 0 ? 'kpi-red' : 'kpi-teal' ?>">
+            <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="kpi-value"><?= $stats['overdue'] ?? 0 ?></div>
+            <div class="kpi-label">Overdue</div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="kpi-card kpi-green">
+            <div class="kpi-icon"><i class="bi bi-currency-euro"></i></div>
+            <div class="kpi-value">€<?= number_format($stats['commission_earned'] ?? 0, 2) ?></div>
+            <div class="kpi-label">Total Earned</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-0">
+    <!-- Recent Projects -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-semibold"><i class="bi bi-kanban me-1"></i> My Projects</span>
+                <a href="<?= APP_URL ?>/developer/projects" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <?php if(empty($projects)): ?>
+                <div class="text-center text-muted py-4">No projects assigned yet.</div>
+                <?php else: ?>
+                <table class="table table-hover mb-0">
+                    <thead class="table-light"><tr><th>Project</th><th>Status</th><th>Priority</th><th>Deadline</th><th></th></tr></thead>
+                    <tbody>
+                    <?php foreach ($projects as $proj): ?>
+                        <?php $isOverdue = $proj['deadline'] && $proj['deadline'] < date('Y-m-d') && !in_array($proj['status'],['completed','on_hold']); ?>
+                        <tr class="<?= $isOverdue?'table-danger':'' ?>">
+                            <td class="fw-semibold"><?= htmlspecialchars($proj['title']) ?></td>
+                            <td><span class="badge <?= match($proj['status']){'awaiting_assignment'=>'bg-secondary','in_progress'=>'bg-primary','testing'=>'bg-info text-dark','on_hold'=>'bg-warning text-dark','completed'=>'bg-success',default=>'bg-secondary'} ?>"><?= ucfirst(str_replace('_',' ',$proj['status'])) ?></span></td>
+                            <td><span class="badge <?= match($proj['priority']){'low'=>'bg-light text-dark','medium'=>'bg-info text-dark','high'=>'bg-warning text-dark','urgent'=>'bg-danger',default=>'bg-secondary'} ?>"><?= ucfirst($proj['priority']) ?></span></td>
+                            <td><?= $proj['deadline'] ? date('d M Y', strtotime($proj['deadline'])) : '—' ?></td>
+                            <td><a href="<?= APP_URL ?>/developer/projects/<?= $proj['id'] ?>" class="btn btn-sm btn-outline-primary">View</a></td>
+                        </tr>
+                    <?php endforeach ?>
+                    </tbody>
+                </table>
+                <?php endif ?>
+            </div>
+        </div>
+
+        <!-- Upcoming Deadlines -->
+        <?php if(!empty($upcoming)): ?>
+        <div class="card border-0 shadow-sm mt-3">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-calendar-event me-1 text-danger"></i> Upcoming Deadlines (14 days)</div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 table-sm">
+                    <thead class="table-light"><tr><th>Project</th><th>Deadline</th><th>Days Left</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($upcoming as $up): ?>
+                        <?php $daysLeft = (int)round((strtotime($up['deadline']) - time()) / 86400); ?>
+                        <tr>
+                            <td><?= htmlspecialchars($up['title']) ?></td>
+                            <td><?= date('d M Y', strtotime($up['deadline'])) ?></td>
+                            <td><span class="badge <?= $daysLeft < 3 ? 'bg-danger' : ($daysLeft < 7 ? 'bg-warning text-dark' : 'bg-info text-dark') ?>"><?= $daysLeft ?> days</span></td>
+                        </tr>
+                    <?php endforeach ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endif ?>
+    </div>
+
+    <!-- Recent Commissions -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-currency-euro me-1 text-success"></i> Recent Commissions</div>
+            <div class="card-body p-0">
+                <?php if(empty($commData)): ?>
+                <div class="text-center text-muted py-4 small">No commissions yet.</div>
+                <?php else: ?>
+                <ul class="list-group list-group-flush">
+                    <?php foreach ($commData as $c): ?>
+                    <li class="list-group-item px-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="small fw-semibold"><?= htmlspecialchars($c['company_name'] ?? '') ?></span>
+                            <span class="fw-bold text-success">€<?= number_format($c['amount'],2) ?></span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">Rate: <?= $c['rate'] ?>%</span>
+                            <span class="badge <?= $c['is_paid'] ? 'bg-success' : 'bg-warning text-dark' ?>" style="font-size:.65rem"><?= $c['is_paid'] ? 'Paid' : 'Pending' ?></span>
+                        </div>
+                    </li>
+                    <?php endforeach ?>
+                </ul>
+                <?php endif ?>
+                <div class="p-3 border-top">
+                    <a href="<?= APP_URL ?>/developer/commissions" class="btn btn-sm btn-outline-success w-100">View All Commissions</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-3">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-graph-up me-1"></i> Progress Summary</div>
+            <div class="card-body">
+                <canvas id="devProgressChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stats = <?= json_encode($stats) ?>;
+    new Chart(document.getElementById('devProgressChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Awaiting', 'In Progress', 'Completed'],
+            datasets: [{
+                data: [
+                    Math.max(0, parseInt(stats.total_projects||0) - parseInt(stats.in_progress||0) - parseInt(stats.completed||0)),
+                    parseInt(stats.in_progress||0),
+                    parseInt(stats.completed||0)
+                ],
+                backgroundColor: ['#6c757d','#0d6efd','#198754'],
+            }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } }, cutout: '60%' }
+    });
+});
+</script>

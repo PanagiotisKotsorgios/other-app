@@ -1,0 +1,5 @@
+Options -Indexes
+
+# Block direct access to everything except public/
+RewriteEngine On
+RewriteRule ^(?!public/)(.*)$ public/$1 [L]

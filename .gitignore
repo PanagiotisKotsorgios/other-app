@@ -1,0 +1,38 @@
+# Environment — never commit real credentials
+.env
+
+# Composer generated
+/vendor/
+
+# User uploads (binary files, not code)
+/public/assets/uploads/proposals/*
+/public/assets/uploads/contracts/*
+/public/assets/uploads/invoices/*
+/public/assets/uploads/receipts/*
+/public/assets/uploads/imports/*
+
+# Keep directory structure with .gitkeep
+!/public/assets/uploads/proposals/.gitkeep
+!/public/assets/uploads/contracts/.gitkeep
+!/public/assets/uploads/invoices/.gitkeep
+!/public/assets/uploads/receipts/.gitkeep
+!/public/assets/uploads/imports/.gitkeep
+
+# Logs
+*.log
+/storage/logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temp / test artifacts
+/tools/test_*.php
+/deploy/*.tar.gz
+/deploy/callcenter-credentials.txt
+/callcenter-credentials.txt
+/root/callcenter-credentials.txt

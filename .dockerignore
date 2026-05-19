@@ -1,0 +1,13 @@
+vendor/
+.git/
+.env
+node_modules/
+public/assets/uploads/proposals/*
+public/assets/uploads/imports/*
+public/assets/uploads/contracts/*
+public/assets/uploads/invoices/*
+public/assets/uploads/receipts/*
+*.log
+*.zip
+*.tar.gz
+deploy/callcenter-*.tar.gz

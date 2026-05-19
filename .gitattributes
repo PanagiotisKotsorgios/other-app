@@ -1,0 +1,36 @@
+# Ensure shell scripts always have LF line endings (required on Linux)
+*.sh         text eol=lf
+*.bash       text eol=lf
+Makefile     text eol=lf
+
+# Force CRLF for Windows-native files
+*.ps1        text eol=crlf
+*.bat        text eol=crlf
+
+# PHP, SQL, config — auto line endings
+*.php        text eol=lf
+*.sql        text eol=lf
+*.md         text eol=lf
+*.json       text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
+*.conf       text eol=lf
+*.htaccess   text eol=lf
+*.css        text eol=lf
+*.js         text eol=lf
+*.xml        text eol=lf
+*.env*       text eol=lf
+Dockerfile   text eol=lf
+
+# Binary files — no line ending conversion
+*.png        binary
+*.jpg        binary
+*.jpeg       binary
+*.gif        binary
+*.ico        binary
+*.xlsx       binary
+*.xls        binary
+*.pdf        binary
+*.zip        binary
+*.tar.gz     binary
+*.gz         binary

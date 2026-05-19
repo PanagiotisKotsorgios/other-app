@@ -1,0 +1,82 @@
+version: "3.9"
+
+services:
+
+  # ── PHP + Apache ────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: callcenter_app
+    restart: unless-stopped
+    environment:
+      APP_NAME: "Call Center CRM"
+      APP_URL: "http://localhost"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_DATABASE: call_center
+      DB_USERNAME: crm_user
+      DB_PASSWORD: "${DB_PASSWORD:-CrmSecure2024!}"
+      COMMISSION_RATE: "10"
+      UPLOAD_MAX_SIZE: "104857600"
+    volumes:
+      - uploads:/var/www/html/public/assets/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - callcenter_net
+
+  # ── MySQL 8.0 ───────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: callcenter_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: call_center
+      MYSQL_USER: crm_user
+      MYSQL_PASSWORD: "${DB_PASSWORD:-CrmSecure2024!}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-RootSecure2024!}"
+      MYSQL_CHARSET: utf8mb4
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./database/migration_v2.sql:/docker-entrypoint-initdb.d/02_migration_v2.sql:ro
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --sql-mode="STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "crm_user", "-p${DB_PASSWORD:-CrmSecure2024!}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - callcenter_net
+
+  # ── ngrok tunnel ────────────────────────────────────────────
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: callcenter_ngrok
+    restart: unless-stopped
+    command: http app:80 --log=stdout
+    environment:
+      NGROK_AUTHTOKEN: "${NGROK_AUTHTOKEN}"
+    ports:
+      - "4040:4040"   # ngrok dashboard
+    depends_on:
+      - app
+    networks:
+      - callcenter_net
+    profiles:
+      - ngrok          # only starts when --profile ngrok is passed
+
+volumes:
+  db_data:
+  uploads:
+
+networks:
+  callcenter_net:
+    driver: bridge
