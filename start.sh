@@ -3,7 +3,6 @@
 #  Call Center CRM — One-command launcher
 #  Usage:  sudo bash start.sh YOUR_NGROK_TOKEN
 # =============================================================
-set -e
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'; BOLD='\033[1m'
 ok()   { echo -e "${GREEN}✓${NC} $*"; }
 info() { echo -e "${CYAN}→${NC} $*"; }
@@ -16,7 +15,7 @@ echo "  ║     Call Center CRM — Docker Launcher        ║"
 echo "  ╚══════════════════════════════════════════════╝"
 echo -e "${NC}"
 
-# ── Parse args ──────────────────────────────────────────────
+# ── Parse args ───────────────────────────────────────────────
 NGROK_TOKEN=""
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -26,9 +25,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# ── Must run as root ─────────────────────────────────────────
+# ── Ensure root ──────────────────────────────────────────────
 if [[ $EUID -ne 0 ]]; then
-    warn "Not running as root — re-launching with sudo..."
     exec sudo bash "$0" "$NGROK_TOKEN"
 fi
 
@@ -37,52 +35,43 @@ if ! docker info &>/dev/null 2>&1; then
     info "Starting Docker daemon..."
     systemctl start docker 2>/dev/null || service docker start 2>/dev/null || true
     sleep 3
-    docker info &>/dev/null 2>&1 || die "Cannot start Docker. Try: sudo systemctl start docker"
+    docker info &>/dev/null 2>&1 || die "Cannot start Docker. Run: sudo systemctl start docker"
 fi
 ok "Docker is running"
 
 # ── Free port 80 ─────────────────────────────────────────────
 info "Checking port 80..."
-if ss -tlnp 2>/dev/null | grep -q ':80 ' || netstat -tlnp 2>/dev/null | grep -q ':80 '; then
-    warn "Port 80 is in use — freeing it..."
-    # Stop Apache if running (from bare-metal install attempt)
-    systemctl stop apache2  2>/dev/null && ok "Stopped Apache"  || true
-    systemctl disable apache2 2>/dev/null || true
-    # Stop nginx if running
-    systemctl stop nginx 2>/dev/null && ok "Stopped nginx" || true
-    # Kill anything else on port 80
-    PID=$(lsof -ti :80 2>/dev/null || fuser 80/tcp 2>/dev/null || true)
-    [[ -n "$PID" ]] && { kill -9 $PID 2>/dev/null || true; warn "Killed process on port 80 (PID $PID)"; }
-    sleep 1
-fi
-
 if ss -tlnp 2>/dev/null | grep -q ':80 '; then
-    die "Port 80 still in use. Run: sudo lsof -i :80  to find what's using it."
+    warn "Port 80 in use — stopping Apache/nginx..."
+    systemctl stop apache2 2>/dev/null && ok "Stopped Apache" || true
+    systemctl stop nginx   2>/dev/null && ok "Stopped nginx"  || true
+    systemctl disable apache2 2>/dev/null || true
+    sleep 1
 fi
 ok "Port 80 is free"
 
-# ── Clean up old containers ──────────────────────────────────
+# ── Kill old ngrok (host) ────────────────────────────────────
+pkill -f "ngrok http" 2>/dev/null || true
+
+# ── Tear down old containers ─────────────────────────────────
 info "Removing old containers..."
 docker compose down --remove-orphans 2>/dev/null || true
 docker rm -f callcenter_app callcenter_db callcenter_ngrok 2>/dev/null || true
 ok "Cleaned"
 
 # ── Build image ──────────────────────────────────────────────
-info "Building app image (cached after first run)..."
-docker build -t callcenter:latest . || die "Build failed (see errors above)"
+info "Building image (cached after first run)..."
+docker build -t callcenter:latest . || die "Build failed (see above)"
 ok "Image built"
 
-# ── DB password + env file ───────────────────────────────────
+# ── DB credentials ───────────────────────────────────────────
 DB_PASS="CrmSecure$(openssl rand -hex 8)Db"
 ENV_FILE="/tmp/callcenter.env"
-cat > "$ENV_FILE" << ENVEOF
-DB_PASSWORD=${DB_PASS}
-DB_ROOT_PASSWORD=Root${DB_PASS}
-ENVEOF
-ok "DB credentials generated"
+printf 'DB_PASSWORD=%s\nDB_ROOT_PASSWORD=Root%s\n' "$DB_PASS" "$DB_PASS" > "$ENV_FILE"
+ok "DB credentials ready"
 
 # ── Start MySQL ──────────────────────────────────────────────
-info "Starting MySQL container..."
+info "Starting MySQL..."
 docker compose --env-file "$ENV_FILE" up -d db
 
 info "Waiting for MySQL (up to 90s)..."
@@ -93,45 +82,79 @@ for i in $(seq 1 45); do
     sleep 2
 done
 echo ""
-ok "MySQL is ready"
+ok "MySQL ready"
 
-# ── Start PHP app ────────────────────────────────────────────
+# ── Start app ────────────────────────────────────────────────
 info "Starting PHP/Apache container..."
 docker compose --env-file "$ENV_FILE" up -d app
 
-info "Waiting for app to respond..."
-for i in $(seq 1 30); do
-    curl -sf http://localhost/auth/login -o /dev/null 2>/dev/null && break || true
+info "Waiting for app (up to 120s)..."
+APP_OK=false
+for i in $(seq 1 60); do
+    if curl -sf http://localhost/auth/login -o /dev/null 2>/dev/null; then
+        APP_OK=true
+        break
+    fi
     printf "."
     sleep 2
 done
 echo ""
+
+if [[ "$APP_OK" != "true" ]]; then
+    warn "App didn't respond in time. Container logs:"
+    docker logs callcenter_app --tail=30
+    die "App container failed to start. Fix the issue above and re-run."
+fi
 ok "App is live at http://localhost"
 
-# ── ngrok ────────────────────────────────────────────────────
+# ── Verify Apache is reachable internally ────────────────────
+CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' callcenter_app 2>/dev/null || true)
+info "Container IP: ${CONTAINER_IP}"
+if [[ -n "$CONTAINER_IP" ]]; then
+    if curl -sf "http://${CONTAINER_IP}/auth/login" -o /dev/null 2>/dev/null; then
+        ok "Apache reachable internally at ${CONTAINER_IP}:80"
+    else
+        warn "Apache NOT reachable at ${CONTAINER_IP}:80 — will tunnel via host port instead"
+    fi
+fi
+
+# ── ngrok (run on HOST, tunnel localhost:80) ─────────────────
 PUBLIC_URL=""
 if [[ -n "$NGROK_TOKEN" ]]; then
-    info "Starting ngrok tunnel..."
-    docker rm -f callcenter_ngrok 2>/dev/null || true
+    # Install ngrok on host if missing
+    if ! command -v ngrok &>/dev/null; then
+        info "Installing ngrok on host..."
+        ARCH=$(uname -m)
+        [[ "$ARCH" == "aarch64" ]] && NGROK_ARCH="arm64" || NGROK_ARCH="amd64"
+        curl -sSL "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-${NGROK_ARCH}.tgz" \
+            -o /tmp/ngrok.tgz
+        tar -xzf /tmp/ngrok.tgz -C /usr/local/bin
+        rm -f /tmp/ngrok.tgz
+        chmod +x /usr/local/bin/ngrok
+        ok "ngrok installed"
+    fi
 
-    docker run -d \
-        --name callcenter_ngrok \
-        --network callcenter_net \
-        -p 4040:4040 \
-        -e NGROK_AUTHTOKEN="${NGROK_TOKEN}" \
-        ngrok/ngrok:latest \
-        http callcenter_app:80 --log=stdout
+    info "Configuring ngrok auth..."
+    ngrok config add-authtoken "${NGROK_TOKEN}" 2>/dev/null || true
 
-    info "Getting public URL..."
+    info "Starting ngrok tunnel → http://localhost:80 ..."
+    pkill -f "ngrok http" 2>/dev/null || true
+    sleep 1
+    # Run ngrok on the HOST — it tunnels localhost:80 (Docker container's mapped port)
+    nohup ngrok http 80 --log=stdout > /tmp/ngrok.log 2>&1 &
+    NGROK_PID=$!
+
+    info "Waiting for tunnel URL..."
     for i in $(seq 1 20); do
         PUBLIC_URL=$(curl -sf http://localhost:4040/api/tunnels 2>/dev/null \
             | python3 -c "
-import sys,json
+import sys, json
 try:
-    t=json.load(sys.stdin).get('tunnels',[])
-    h=[x for x in t if 'https' in x.get('public_url','')]
-    print((h or t)[0]['public_url'] if (h or t) else '')
-except: print('')
+    t = json.load(sys.stdin).get('tunnels', [])
+    https = [x for x in t if 'https' in x.get('public_url','')]
+    print((https or t)[0]['public_url'] if (https or t) else '')
+except:
+    print('')
 " 2>/dev/null || true)
         [[ -n "$PUBLIC_URL" ]] && break
         printf "."
@@ -140,18 +163,20 @@ except: print('')
     echo ""
 
     if [[ -n "$PUBLIC_URL" ]]; then
+        # Update .env inside container with the public URL
         docker exec callcenter_app \
             sed -i "s|APP_URL=.*|APP_URL=${PUBLIC_URL}|" /var/www/html/.env 2>/dev/null || true
-        ok "Public URL: ${PUBLIC_URL}"
+        ok "ngrok tunnel active: ${PUBLIC_URL}"
     else
-        warn "ngrok URL not detected — check http://localhost:4040"
+        warn "Could not get ngrok URL — check /tmp/ngrok.log"
+        cat /tmp/ngrok.log 2>/dev/null | tail -5 || true
     fi
 else
     warn "No ngrok token — app is local only"
-    info "Next time run: sudo bash start.sh YOUR_NGROK_TOKEN"
+    info "Next time: sudo bash start.sh YOUR_NGROK_TOKEN"
 fi
 
-# ── Summary ──────────────────────────────────────────────────
+# ── Done ─────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}${GREEN}"
 echo "  ╔══════════════════════════════════════════════════════════╗"
@@ -164,12 +189,12 @@ echo "  ║                                                          ║"
 echo "  ║  Login:    admin@callcenter.com                          ║"
 echo "  ║  Password: Admin@1234                                    ║"
 echo "  ║                                                          ║"
-echo "  ║  Stop:  docker compose down                             ║"
-echo "  ║  Logs:  docker compose logs -f app                     ║"
+echo "  ║  Restart:  sudo bash start.sh YOUR_TOKEN               ║"
+echo "  ║  Stop:     docker compose down && pkill ngrok           ║"
+echo "  ║  Logs:     docker compose logs -f app                  ║"
 echo "  ╚══════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
-# Save credentials for reference
 cat > ~/callcenter-info.txt << INFO
 Call Center CRM — $(date)
 ================================
@@ -179,8 +204,8 @@ Login:      admin@callcenter.com
 Password:   Admin@1234
 DB Pass:    ${DB_PASS}
 
-Restart:  cd ~/callcenter && sudo bash start.sh YOUR_NGROK_TOKEN
-Stop:     docker compose down
-Logs:     docker compose logs -f app
+Restart: cd ~/callcenter && sudo bash start.sh YOUR_NGROK_TOKEN
+Stop:    docker compose down && pkill ngrok
+Logs:    docker compose logs -f app
 INFO
-echo -e "${CYAN}→${NC} Credentials saved: ~/callcenter-info.txt"
+info "Info saved: ~/callcenter-info.txt"

@@ -1,8 +1,12 @@
 #!/bin/bash
-set -e
+# No set -e — we handle errors manually so Apache ALWAYS starts even if tools fail
 
-# Write .env from environment variables
-cat > /var/www/html/.env <<EOF
+log() { echo "[entrypoint] $*"; }
+warn() { echo "[entrypoint] WARNING: $*"; }
+
+# ── Write .env ──────────────────────────────────────────────
+log "Writing .env..."
+cat > /var/www/html/.env << EOF
 APP_NAME="${APP_NAME:-Call Center CRM}"
 APP_URL="${APP_URL:-http://localhost}"
 APP_ENV="${APP_ENV:-production}"
@@ -12,52 +16,60 @@ DB_HOST="${DB_HOST:-db}"
 DB_PORT="${DB_PORT:-3306}"
 DB_DATABASE="${DB_DATABASE:-call_center}"
 DB_USERNAME="${DB_USERNAME:-crm_user}"
-DB_PASSWORD="${DB_PASSWORD:-CrmSecure2024!}"
+DB_PASSWORD="${DB_PASSWORD}"
 
 COMMISSION_RATE="${COMMISSION_RATE:-10}"
 UPLOAD_MAX_SIZE="${UPLOAD_MAX_SIZE:-104857600}"
 EOF
-
 chmod 640 /var/www/html/.env
-chown www-data:www-data /var/www/html/.env
 
-# Ensure upload directories exist and are writable
+# ── Ensure upload dirs exist ─────────────────────────────────
 for dir in proposals imports contracts invoices receipts; do
     mkdir -p "/var/www/html/public/assets/uploads/$dir"
-    chown -R www-data:www-data "/var/www/html/public/assets/uploads"
 done
+mkdir -p /var/www/html/public/assets/templates
+chown -R www-data:www-data /var/www/html/public/assets/uploads 2>/dev/null || true
+chown -R www-data:www-data /var/www/html/public/assets/templates 2>/dev/null || true
 
-# Wait for MySQL to be ready
-echo "[entrypoint] Waiting for database..."
-max_tries=30
+# ── Wait for MySQL ───────────────────────────────────────────
+log "Waiting for MySQL at ${DB_HOST}:${DB_PORT}..."
+max_tries=40
 count=0
-until php -r "new PDO('mysql:host=${DB_HOST};port=${DB_PORT};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');" 2>/dev/null; do
-    count=$((count+1))
+until mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+      -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
+      "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; do
+    count=$((count + 1))
     if [ $count -ge $max_tries ]; then
-        echo "[entrypoint] ERROR: Database not ready after $max_tries attempts."
-        exit 1
+        warn "MySQL not ready after $max_tries attempts — starting Apache anyway"
+        break
     fi
-    echo "[entrypoint] Waiting for DB... ($count/$max_tries)"
+    log "Waiting for MySQL... ($count/$max_tries)"
     sleep 3
 done
-echo "[entrypoint] Database is ready."
 
-# Seed admin user if users table is empty
-USER_COUNT=$(php -r "
-\$db = new PDO('mysql:host=${DB_HOST};dbname=${DB_DATABASE}', '${DB_USERNAME}', '${DB_PASSWORD}');
-echo \$db->query('SELECT COUNT(*) FROM users')->fetchColumn();
-" 2>/dev/null || echo "0")
+if mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+         -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
+         "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; then
+    log "MySQL is ready."
 
-if [ "$USER_COUNT" = "0" ]; then
-    echo "[entrypoint] Seeding admin user..."
-    php /var/www/html/tools/setup.php
+    # ── Seed admin user if needed ────────────────────────────
+    USER_COUNT=$(mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+        -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
+        "${DB_DATABASE}" -sNe "SELECT COUNT(*) FROM users;" 2>/dev/null || echo "0")
+
+    if [ "$USER_COUNT" = "0" ]; then
+        log "Seeding admin user..."
+        php /var/www/html/tools/setup.php 2>/dev/null && log "Admin user seeded." || warn "setup.php failed (non-fatal)"
+    else
+        log "Users already exist ($USER_COUNT), skipping seed."
+    fi
+
+    # ── Generate Excel template if needed ────────────────────
+    if [ ! -f /var/www/html/public/assets/templates/businesses_template.xlsx ]; then
+        log "Generating Excel template..."
+        php /var/www/html/tools/generate_template.php 2>/dev/null && log "Template generated." || warn "Template generation failed (non-fatal)"
+    fi
 fi
 
-# Generate Excel template
-if [ ! -f /var/www/html/public/assets/templates/businesses_template.xlsx ]; then
-    echo "[entrypoint] Generating Excel template..."
-    php /var/www/html/tools/generate_template.php 2>/dev/null || true
-fi
-
-echo "[entrypoint] Starting Apache..."
+log "Starting Apache..."
 exec "$@"
