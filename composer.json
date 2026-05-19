@@ -14,8 +14,6 @@
     },
     "config": {
         "optimize-autoloader": true,
-        "platform": {
-            "php": "8.2.12"
-        }
+        "allow-plugins": {}
     }
 }
