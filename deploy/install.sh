@@ -30,7 +30,7 @@ echo -e "${NC}"
 # ── Parse arguments ───────────────────────────────────────────
 NGROK_TOKEN=""
 DOMAIN="localhost"
-DB_PASS="CrmDB$(openssl rand -hex 6)!"
+DB_PASS="CrmDB$(openssl rand -hex 8)"
 INSTALL_DIR="/var/www/callcenter"
 
 while [[ $# -gt 0 ]]; do
@@ -131,20 +131,55 @@ fi
 systemctl enable mysql --quiet
 systemctl start mysql
 
-# Wait for MySQL
-for i in {1..20}; do
-    mysqladmin ping -u root --silent 2>/dev/null && break
+# Wait for MySQL to accept connections
+info "Waiting for MySQL..."
+for i in {1..30}; do
+    if mysqladmin ping --silent 2>/dev/null || \
+       mysqladmin ping -u root --silent 2>/dev/null || \
+       mysql -u root -e "SELECT 1" &>/dev/null 2>&1 || \
+       mysql -e "SELECT 1" &>/dev/null 2>&1; then
+        break
+    fi
     sleep 2
 done
 
-# Create database + user (idempotent)
-mysql -u root <<SQL
+# Ubuntu uses auth_socket for root by default — use sudo / no-password root
+# Try all access methods and use whichever works
+MYSQL_CMD=""
+if mysql -u root -e "SELECT 1" &>/dev/null 2>&1; then
+    MYSQL_CMD="mysql -u root"
+elif mysql -e "SELECT 1" &>/dev/null 2>&1; then
+    MYSQL_CMD="mysql"
+else
+    MYSQL_CMD="mysql -u root"  # will use auth_socket via current root session
+fi
+
+info "MySQL access method: $MYSQL_CMD"
+
+# Write SQL to a temp file to avoid heredoc quoting issues with special chars
+SQL_TMP=$(mktemp /tmp/crm_setup_XXXXXX.sql)
+cat > "$SQL_TMP" << SQLEOF
 CREATE DATABASE IF NOT EXISTS call_center CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS 'crm_user'@'localhost' IDENTIFIED BY '${DB_PASS}';
+ALTER USER 'crm_user'@'localhost' IDENTIFIED BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON call_center.* TO 'crm_user'@'localhost';
 FLUSH PRIVILEGES;
-SQL
-ok "MySQL configured (user: crm_user)"
+SQLEOF
+
+$MYSQL_CMD < "$SQL_TMP" 2>/dev/null || {
+    warn "Standard MySQL auth failed, trying with sudo..."
+    sudo mysql < "$SQL_TMP" 2>/dev/null || \
+    sudo mysql -u root < "$SQL_TMP"
+}
+rm -f "$SQL_TMP"
+
+# Verify connection works
+if mysql -u crm_user -p"${DB_PASS}" call_center -e "SELECT 1" &>/dev/null 2>&1; then
+    ok "MySQL configured — crm_user can connect"
+else
+    warn "Verifying crm_user connection failed, check MySQL manually"
+    info "Run: sudo mysql -e \"ALTER USER 'crm_user'@'localhost' IDENTIFIED BY '${DB_PASS}'; FLUSH PRIVILEGES;\""
+fi
 
 # ── Step 5: Composer ───────────────────────────────────────────
 header "Step 5/9 — Composer"
@@ -222,10 +257,12 @@ ok "Composer dependencies installed"
 # ── Step 7: Database setup ─────────────────────────────────────
 header "Step 7/9 — Database Setup"
 
-mysql -u crm_user -p"${DB_PASS}" call_center < "$INSTALL_DIR/database/schema.sql"
+MYSQL_CRM="mysql -u crm_user -p${DB_PASS} call_center"
+
+$MYSQL_CRM < "$INSTALL_DIR/database/schema.sql" 2>/dev/null
 ok "Schema imported"
 
-mysql -u crm_user -p"${DB_PASS}" call_center < "$INSTALL_DIR/database/migration_v2.sql" 2>/dev/null || \
+$MYSQL_CRM < "$INSTALL_DIR/database/migration_v2.sql" 2>/dev/null || \
     warn "Migration v2 partially applied (some parts may already exist — normal)"
 ok "Migration v2 applied"
 
@@ -282,12 +319,32 @@ header "Step 9/9 — ngrok"
 # Install ngrok
 if ! command -v ngrok &>/dev/null; then
     info "Installing ngrok..."
-    curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-    echo "deb https://ngrok-agent.s3.amazonaws.com buster main" > /etc/apt/sources.list.d/ngrok.list
-    apt-get update -qq
-    apt-get install -y -qq ngrok
+    # Try official apt repo first
+    NGROK_INSTALLED=false
+    if curl -sSf https://ngrok-agent.s3.amazonaws.com/ngrok.asc -o /etc/apt/trusted.gpg.d/ngrok.asc 2>/dev/null; then
+        echo "deb https://ngrok-agent.s3.amazonaws.com buster main" > /etc/apt/sources.list.d/ngrok.list
+        apt-get update -qq 2>/dev/null
+        apt-get install -y -qq ngrok 2>/dev/null && NGROK_INSTALLED=true
+    fi
+    # Fallback: download binary directly (works on all Ubuntu versions)
+    if [[ "$NGROK_INSTALLED" != "true" ]]; then
+        warn "apt install failed, downloading ngrok binary directly..."
+        ARCH=$(uname -m)
+        case "$ARCH" in
+            x86_64)  NGROK_ARCH="amd64" ;;
+            aarch64) NGROK_ARCH="arm64" ;;
+            armv7l)  NGROK_ARCH="arm"   ;;
+            *)       NGROK_ARCH="amd64" ;;
+        esac
+        curl -sSL "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-${NGROK_ARCH}.tgz" \
+            -o /tmp/ngrok.tgz
+        tar -xzf /tmp/ngrok.tgz -C /usr/local/bin
+        rm -f /tmp/ngrok.tgz
+        chmod +x /usr/local/bin/ngrok
+        NGROK_INSTALLED=true
+    fi
 fi
-ok "ngrok installed"
+ngrok version 2>/dev/null && ok "ngrok installed" || warn "ngrok install may have issues"
 
 # ── Create management scripts ───────────────────────────────────
 cat > /usr/local/bin/crm-start <<'STARTSCRIPT'
