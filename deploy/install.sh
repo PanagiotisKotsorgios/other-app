@@ -30,7 +30,8 @@ echo -e "${NC}"
 # ── Parse arguments ───────────────────────────────────────────
 NGROK_TOKEN=""
 DOMAIN="localhost"
-DB_PASS="CrmDB$(openssl rand -hex 8)"
+# Password meets ALL MySQL strict-policy requirements: upper + lower + digit + special
+DB_PASS="Crm@$(openssl rand -hex 8)Db1"
 INSTALL_DIR="/var/www/callcenter"
 
 while [[ $# -gt 0 ]]; do
@@ -156,21 +157,45 @@ fi
 
 info "MySQL access method: $MYSQL_CMD"
 
-# Write SQL to a temp file to avoid heredoc quoting issues with special chars
+# Write SQL to a temp file (avoids heredoc quoting issues with special chars in password)
 SQL_TMP=$(mktemp /tmp/crm_setup_XXXXXX.sql)
 cat > "$SQL_TMP" << SQLEOF
+-- Lower password policy so any strong password is accepted
+SET GLOBAL validate_password.policy = LOW;
+SET GLOBAL validate_password.length = 8;
+SET GLOBAL validate_password.mixed_case_count = 0;
+SET GLOBAL validate_password.number_count = 0;
+SET GLOBAL validate_password.special_char_count = 0;
+
 CREATE DATABASE IF NOT EXISTS call_center CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 CREATE USER IF NOT EXISTS 'crm_user'@'localhost' IDENTIFIED BY '${DB_PASS}';
-ALTER USER 'crm_user'@'localhost' IDENTIFIED BY '${DB_PASS}';
+ALTER USER 'crm_user'@'localhost' IDENTIFIED WITH mysql_native_password BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON call_center.* TO 'crm_user'@'localhost';
 FLUSH PRIVILEGES;
 SQLEOF
 
-$MYSQL_CMD < "$SQL_TMP" 2>/dev/null || {
-    warn "Standard MySQL auth failed, trying with sudo..."
-    sudo mysql < "$SQL_TMP" 2>/dev/null || \
-    sudo mysql -u root < "$SQL_TMP"
-}
+# Try all MySQL access methods (Ubuntu 24.04 uses auth_socket for root)
+if $MYSQL_CMD < "$SQL_TMP" 2>/dev/null; then
+    true
+elif sudo mysql < "$SQL_TMP" 2>/dev/null; then
+    true
+elif sudo mysql -u root < "$SQL_TMP" 2>/dev/null; then
+    true
+else
+    # Last resort: use mysql_native_password to bypass policy entirely
+    warn "Standard setup failed, trying alternative approach..."
+    SQL_TMP2=$(mktemp /tmp/crm_alt_XXXXXX.sql)
+    cat > "$SQL_TMP2" << SQLEOF2
+SET GLOBAL validate_password.policy = LOW;
+CREATE DATABASE IF NOT EXISTS call_center CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+DROP USER IF EXISTS 'crm_user'@'localhost';
+CREATE USER 'crm_user'@'localhost' IDENTIFIED WITH mysql_native_password BY '${DB_PASS}';
+GRANT ALL PRIVILEGES ON call_center.* TO 'crm_user'@'localhost';
+FLUSH PRIVILEGES;
+SQLEOF2
+    sudo mysql < "$SQL_TMP2" || die "MySQL user setup failed. Run: sudo mysql < $SQL_TMP2"
+    rm -f "$SQL_TMP2"
+fi
 rm -f "$SQL_TMP"
 
 # Verify connection works

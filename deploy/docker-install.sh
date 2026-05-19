@@ -26,7 +26,7 @@ echo -e "${NC}"
 # ── Args ───────────────────────────────────────────────────────
 NGROK_TOKEN=""
 APP_PORT=80
-DB_PASS="CrmDB$(openssl rand -hex 6 2>/dev/null || date +%s)!"
+DB_PASS="Crm@$(openssl rand -hex 8 2>/dev/null || date +%s)Db1"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
