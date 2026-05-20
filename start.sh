@@ -102,6 +102,51 @@ done
 echo ""
 ok "MySQL is up"
 
+# ── Fix crm_user credentials (handles stale volumes) ─────────
+# MySQL only applies MYSQL_USER/PASSWORD on first init. If the volume
+# existed before with a different password, crm_user gets "Access denied".
+# Solution: use root to forcibly reset crm_user's password every run.
+info "Ensuring DB credentials are correct..."
+
+# Try the current root password first; fall back to the old hardcoded default
+MYSQL_ROOT_PASS="Root${DB_PASS}"
+if ! docker exec callcenter_db mysql -u root -p"${MYSQL_ROOT_PASS}" \
+        -e "SELECT 1;" >/dev/null 2>&1; then
+    warn "Root password from pass file didn't work — trying legacy default..."
+    MYSQL_ROOT_PASS="RootSecure2024Db"
+fi
+
+if docker exec callcenter_db mysql -u root -p"${MYSQL_ROOT_PASS}" \
+        -e "SELECT 1;" >/dev/null 2>&1; then
+    docker exec callcenter_db mysql -u root -p"${MYSQL_ROOT_PASS}" <<SQL 2>/dev/null
+CREATE DATABASE IF NOT EXISTS \`call_center\`
+    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS 'crm_user'@'%' IDENTIFIED BY '${DB_PASS}';
+ALTER USER 'crm_user'@'%' IDENTIFIED BY '${DB_PASS}';
+GRANT ALL PRIVILEGES ON \`call_center\`.* TO 'crm_user'@'%';
+FLUSH PRIVILEGES;
+SQL
+    ok "DB credentials synced"
+    # Update root password to match pass file for future runs
+    docker exec callcenter_db mysql -u root -p"${MYSQL_ROOT_PASS}" \
+        -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Root${DB_PASS}'; FLUSH PRIVILEGES;" \
+        >/dev/null 2>&1 || true
+else
+    # Both passwords failed — volume likely corrupted. Wipe and reinit.
+    warn "Cannot connect as root — wiping DB volume for clean reinit..."
+    docker compose --env-file "$ENV_FILE" down -v --remove-orphans 2>/dev/null || true
+    docker volume rm callcenter_db_data 2>/dev/null || true
+    info "Restarting MySQL with fresh volume..."
+    docker compose --env-file "$ENV_FILE" up -d db
+    for i in $(seq 1 30); do
+        docker exec callcenter_db mysqladmin ping -h localhost --silent 2>/dev/null && break || true
+        printf "."
+        sleep 2
+    done
+    echo ""
+    ok "MySQL reinitialized"
+fi
+
 # ── Start app ────────────────────────────────────────────────
 info "Starting PHP/Apache container..."
 docker compose --env-file "$ENV_FILE" up -d app
