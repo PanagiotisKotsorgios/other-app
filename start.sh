@@ -87,10 +87,12 @@ ok "MySQL is up"
 info "Starting PHP/Apache container..."
 docker compose --env-file "$ENV_FILE" up -d app
 
-info "Waiting for app (up to 10 min — MySQL init on first run is slow)..."
+info "Waiting for Apache to start (up to 2 min)..."
 APP_OK=false
-for i in $(seq 1 300); do
-    if curl -sf http://localhost/auth/login -o /dev/null 2>/dev/null; then
+for i in $(seq 1 60); do
+    # Accept any HTTP response (200 or 500) — means Apache is up
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/auth/login 2>/dev/null || echo "000")
+    if [[ "$HTTP_CODE" != "000" ]]; then
         APP_OK=true
         break
     fi
@@ -100,11 +102,23 @@ done
 echo ""
 
 if [[ "$APP_OK" != "true" ]]; then
-    warn "App didn't respond in time. Container logs:"
+    warn "Apache didn't start in time. Container logs:"
     docker logs callcenter_app --tail=30
     die "App container failed to start. Fix the issue above and re-run."
 fi
-ok "App is live at http://localhost"
+ok "Apache is up at http://localhost"
+
+# ── Wait for DB to finish init (login page needs it) ─────────
+info "Waiting for DB to be ready (MySQL init can take a few minutes)..."
+for i in $(seq 1 150); do
+    if curl -sf http://localhost/auth/login -o /dev/null 2>/dev/null; then
+        ok "App is live at http://localhost"
+        break
+    fi
+    printf "."
+    sleep 2
+done
+echo ""
 
 # ── Verify Apache is reachable internally ────────────────────
 CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' callcenter_app 2>/dev/null || true)

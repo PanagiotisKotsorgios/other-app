@@ -31,32 +31,46 @@ mkdir -p /var/www/html/public/assets/templates
 chown -R www-data:www-data /var/www/html/public/assets/uploads 2>/dev/null || true
 chown -R www-data:www-data /var/www/html/public/assets/templates 2>/dev/null || true
 
-# ── Wait for MySQL ───────────────────────────────────────────
+# ── Wait for MySQL (use mysqladmin ping — avoids auth plugin issues) ──
 log "Waiting for MySQL at ${DB_HOST}:${DB_PORT}..."
 max_tries=200
 count=0
-until mysql -h "${DB_HOST}" -P "${DB_PORT}" \
-      -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
-      "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; do
+until mysqladmin ping -h "${DB_HOST}" -P "${DB_PORT}" --silent 2>/dev/null; do
     count=$((count + 1))
     if [ $count -ge $max_tries ]; then
-        warn "MySQL not ready after $max_tries attempts — starting Apache anyway"
+        warn "MySQL not reachable after $max_tries attempts — starting Apache anyway"
         break
     fi
     log "Waiting for MySQL... ($count/$max_tries)"
     sleep 3
 done
 
-if mysql -h "${DB_HOST}" -P "${DB_PORT}" \
-         -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
-         "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; then
-    log "MySQL is ready."
+# Extra wait to let MySQL finish running init scripts (creating crm_user etc.)
+if mysqladmin ping -h "${DB_HOST}" -P "${DB_PORT}" --silent 2>/dev/null; then
+    log "MySQL is up. Waiting for init scripts to finish..."
+    # Poll until crm_user can actually connect (max 5 more minutes)
+    init_tries=0
+    until mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+          -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
+          "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; do
+        init_tries=$((init_tries + 1))
+        if [ $init_tries -ge 100 ]; then
+            warn "crm_user not ready after 100 extra attempts — continuing anyway"
+            break
+        fi
+        sleep 3
+    done
 
-    # ── Apply schema migrations (idempotent) ─────────────────
-    log "Applying schema migrations..."
-    mysql -h "${DB_HOST}" -P "${DB_PORT}" \
-        -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
-        "${DB_DATABASE}" 2>/dev/null <<'EOSQL'
+    if mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+             -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
+             "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; then
+        log "MySQL crm_user is ready."
+
+        # ── Apply schema migrations (idempotent) ─────────────────
+        log "Applying schema migrations..."
+        mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+            -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
+            "${DB_DATABASE}" 2>/dev/null <<'EOSQL'
 ALTER TABLE users MODIFY COLUMN role
   ENUM('admin','caller','developer','partner') NOT NULL DEFAULT 'caller';
 
@@ -67,24 +81,29 @@ CREATE TABLE IF NOT EXISTS `user_roles` (
   CONSTRAINT `fk_ur_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 EOSQL
-    log "Migrations applied."
+        log "Migrations applied."
 
-    # ── Seed admin user if needed ────────────────────────────
-    USER_COUNT=$(mysql -h "${DB_HOST}" -P "${DB_PORT}" \
-        -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
-        "${DB_DATABASE}" -sNe "SELECT COUNT(*) FROM users;" 2>/dev/null || echo "0")
+        # ── Seed admin user if needed ────────────────────────────
+        USER_COUNT=$(mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+            -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
+            "${DB_DATABASE}" -sNe "SELECT COUNT(*) FROM users;" 2>/dev/null || echo "0")
 
-    if [ "$USER_COUNT" = "0" ]; then
-        log "Seeding admin user..."
-        php /var/www/html/tools/setup.php 2>/dev/null && log "Admin user seeded." || warn "setup.php failed (non-fatal)"
+        if [ "$USER_COUNT" = "0" ]; then
+            log "Seeding admin user..."
+            php /var/www/html/tools/setup.php 2>/dev/null && log "Admin user seeded." \
+                || warn "setup.php failed (non-fatal)"
+        else
+            log "Users already exist ($USER_COUNT), skipping seed."
+        fi
+
+        # ── Generate Excel template if needed ────────────────────
+        if [ ! -f /var/www/html/public/assets/templates/businesses_template.xlsx ]; then
+            log "Generating Excel template..."
+            php /var/www/html/tools/generate_template.php 2>/dev/null \
+                && log "Template generated." || warn "Template generation failed (non-fatal)"
+        fi
     else
-        log "Users already exist ($USER_COUNT), skipping seed."
-    fi
-
-    # ── Generate Excel template if needed ────────────────────
-    if [ ! -f /var/www/html/public/assets/templates/businesses_template.xlsx ]; then
-        log "Generating Excel template..."
-        php /var/www/html/tools/generate_template.php 2>/dev/null && log "Template generated." || warn "Template generation failed (non-fatal)"
+        warn "crm_user still not ready — Apache will start but DB may be unavailable"
     fi
 fi
 
