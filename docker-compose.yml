@@ -49,7 +49,7 @@ services:
       --collation-server=utf8mb4_unicode_ci
       --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO
     healthcheck:
-      test: ["CMD", "mysql", "-h", "localhost", "-u", "crm_user", "-p${DB_PASSWORD:-CrmSecure2024Db}", "call_center", "-e", "SELECT 1"]
+      test: ["CMD-SHELL", "mysql -h localhost -u $$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE -e 'SELECT 1' 2>/dev/null"]
       interval: 5s
       timeout: 5s
       retries: 60
