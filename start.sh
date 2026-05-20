@@ -109,26 +109,29 @@ ok "MySQL is up"
 info "Ensuring DB credentials are correct..."
 
 # Try the current root password first; fall back to the old hardcoded default
+# --skip-ssl: avoid TLS errors from the MariaDB client connecting to MySQL 8
 MYSQL_ROOT_PASS="Root${DB_PASS}"
-if ! docker exec callcenter_db mysql -u root -p"${MYSQL_ROOT_PASS}" \
+if ! docker exec callcenter_db mysql --skip-ssl -u root -p"${MYSQL_ROOT_PASS}" \
         -e "SELECT 1;" >/dev/null 2>&1; then
     warn "Root password from pass file didn't work — trying legacy default..."
     MYSQL_ROOT_PASS="RootSecure2024Db"
 fi
 
-if docker exec callcenter_db mysql -u root -p"${MYSQL_ROOT_PASS}" \
+if docker exec callcenter_db mysql --skip-ssl -u root -p"${MYSQL_ROOT_PASS}" \
         -e "SELECT 1;" >/dev/null 2>&1; then
-    docker exec callcenter_db mysql -u root -p"${MYSQL_ROOT_PASS}" <<SQL 2>/dev/null
+    docker exec callcenter_db mysql --skip-ssl -u root -p"${MYSQL_ROOT_PASS}" <<SQL 2>/dev/null
 CREATE DATABASE IF NOT EXISTS \`call_center\`
     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS 'crm_user'@'%' IDENTIFIED BY '${DB_PASS}';
-ALTER USER 'crm_user'@'%' IDENTIFIED BY '${DB_PASS}';
+CREATE USER IF NOT EXISTS 'crm_user'@'%'
+    IDENTIFIED WITH mysql_native_password BY '${DB_PASS}';
+ALTER USER 'crm_user'@'%'
+    IDENTIFIED WITH mysql_native_password BY '${DB_PASS}';
 GRANT ALL PRIVILEGES ON \`call_center\`.* TO 'crm_user'@'%';
 FLUSH PRIVILEGES;
 SQL
     ok "DB credentials synced"
-    # Update root password to match pass file for future runs
-    docker exec callcenter_db mysql -u root -p"${MYSQL_ROOT_PASS}" \
+    # Align root@localhost password for future entrypoint root calls
+    docker exec callcenter_db mysql --skip-ssl -u root -p"${MYSQL_ROOT_PASS}" \
         -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'Root${DB_PASS}'; FLUSH PRIVILEGES;" \
         >/dev/null 2>&1 || true
 else
@@ -139,7 +142,7 @@ else
     info "Restarting MySQL with fresh volume..."
     docker compose --env-file "$ENV_FILE" up -d db
     for i in $(seq 1 30); do
-        docker exec callcenter_db mysqladmin ping -h localhost --silent 2>/dev/null && break || true
+        docker exec callcenter_db mysqladmin --skip-ssl ping -h localhost --silent 2>/dev/null && break || true
         printf "."
         sleep 2
     done
@@ -171,6 +174,12 @@ if [[ "$APP_OK" != "true" ]]; then
     die "App container failed to start. Fix the issue above and re-run."
 fi
 ok "App is live at http://localhost"
+
+# ── Ensure admin user exists (safety net if entrypoint seeding failed) ──
+info "Ensuring admin user exists..."
+docker exec callcenter_app php /var/www/html/tools/setup.php 2>/dev/null \
+    && ok "Admin user ready (admin@callcenter.com / Admin@1234)" \
+    || warn "setup.php could not run — check logs if login fails"
 
 # ── ngrok (run on HOST, tunnel localhost:80) ─────────────────
 PUBLIC_URL=""
