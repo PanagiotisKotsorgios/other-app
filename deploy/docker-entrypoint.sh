@@ -1,7 +1,7 @@
 #!/bin/bash
 # No set -e — we handle errors manually so Apache ALWAYS starts even if tools fail
 
-log() { echo "[entrypoint] $*"; }
+log()  { echo "[entrypoint] $*"; }
 warn() { echo "[entrypoint] WARNING: $*"; }
 
 # ── Write .env ──────────────────────────────────────────────
@@ -32,7 +32,7 @@ mkdir -p /var/www/html/public/assets/templates
 chown -R www-data:www-data /var/www/html/public/assets/uploads 2>/dev/null || true
 chown -R www-data:www-data /var/www/html/public/assets/templates 2>/dev/null || true
 
-# ── Wait for MySQL (use mysqladmin ping — avoids auth plugin issues) ──
+# ── Wait for MySQL root to be available ──────────────────────
 log "Waiting for MySQL at ${DB_HOST}:${DB_PORT}..."
 max_tries=200
 count=0
@@ -46,33 +46,33 @@ until mysqladmin ping -h "${DB_HOST}" -P "${DB_PORT}" --silent 2>/dev/null; do
     sleep 3
 done
 
-# Extra wait to let MySQL finish running init scripts (creating crm_user etc.)
 if mysqladmin ping -h "${DB_HOST}" -P "${DB_PORT}" --silent 2>/dev/null; then
-    log "MySQL is up. Waiting for init scripts to finish..."
-    # Poll until crm_user can actually connect (max 5 more minutes)
-    init_tries=0
-    until mysql -h "${DB_HOST}" -P "${DB_PORT}" \
-          -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
-          "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; do
-        init_tries=$((init_tries + 1))
-        if [ $init_tries -ge 100 ]; then
-            warn "crm_user not ready after 100 extra attempts — continuing anyway"
-            break
-        fi
-        sleep 3
-    done
+    log "MySQL is up."
 
-    if mysql -h "${DB_HOST}" -P "${DB_PORT}" \
-             -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
-             "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; then
-        log "MySQL crm_user is ready."
+    # ── CRITICAL: Force crm_user to exist with the correct password ──
+    # MySQL only sets MYSQL_USER/PASSWORD on first volume init.
+    # If the volume already exists with an old or different password,
+    # the app gets "Access denied". Fix: always reset via root.
+    log "Ensuring crm_user credentials and schema..."
+    mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+        -u root -p"${DB_ROOT_PASSWORD:-RootSecure2024Db}" 2>/dev/null <<EOSQL
+-- Ensure the database exists
+CREATE DATABASE IF NOT EXISTS \`${DB_DATABASE:-call_center}\`
+    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-        # ── Apply schema migrations as root (guaranteed DDL privileges) ──
-        log "Applying schema migrations..."
-        mysql -h "${DB_HOST}" -P "${DB_PORT}" \
-            -u root -p"${DB_ROOT_PASSWORD:-RootSecure2024Db}" 2>/dev/null <<EOSQL
+-- Ensure crm_user exists with the current password
+CREATE USER IF NOT EXISTS '${DB_USERNAME:-crm_user}'@'%'
+    IDENTIFIED BY '${DB_PASSWORD}';
+ALTER USER '${DB_USERNAME:-crm_user}'@'%'
+    IDENTIFIED BY '${DB_PASSWORD}';
+
+-- Ensure crm_user has full access to the app database
+GRANT ALL PRIVILEGES ON \`${DB_DATABASE:-call_center}\`.* TO '${DB_USERNAME:-crm_user}'@'%';
+FLUSH PRIVILEGES;
+
 USE \`${DB_DATABASE:-call_center}\`;
 
+-- Apply schema migrations (idempotent)
 ALTER TABLE users MODIFY COLUMN role
   ENUM('admin','caller','developer','partner') NOT NULL DEFAULT 'caller';
 
@@ -83,29 +83,53 @@ CREATE TABLE IF NOT EXISTS \`user_roles\` (
   CONSTRAINT \`fk_ur_user\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`id\`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 EOSQL
-        log "Migrations applied."
 
-        # ── Seed admin user if needed ────────────────────────────
+    if [ $? -eq 0 ]; then
+        log "crm_user credentials set and schema applied."
+    else
+        warn "Root DB setup had errors — will try to continue anyway"
+    fi
+
+    # ── Wait for crm_user to be usable (schema init may take a moment) ──
+    log "Verifying crm_user can connect..."
+    db_ok=false
+    for i in $(seq 1 20); do
+        if mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+               -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
+               "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; then
+            db_ok=true
+            break
+        fi
+        sleep 2
+    done
+
+    if [ "$db_ok" = "true" ]; then
+        log "crm_user connection verified."
+
+        # ── Seed admin user if no users exist ────────────────────
         USER_COUNT=$(mysql -h "${DB_HOST}" -P "${DB_PORT}" \
             -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
             "${DB_DATABASE}" -sNe "SELECT COUNT(*) FROM users;" 2>/dev/null || echo "0")
 
         if [ "$USER_COUNT" = "0" ]; then
             log "Seeding admin user..."
-            php /var/www/html/tools/setup.php 2>/dev/null && log "Admin user seeded." \
+            php /var/www/html/tools/setup.php 2>/dev/null \
+                && log "Admin user seeded." \
                 || warn "setup.php failed (non-fatal)"
         else
-            log "Users already exist ($USER_COUNT), skipping seed."
+            log "Users already exist ($USER_COUNT) — skipping seed."
         fi
 
         # ── Generate Excel template if needed ────────────────────
         if [ ! -f /var/www/html/public/assets/templates/businesses_template.xlsx ]; then
             log "Generating Excel template..."
             php /var/www/html/tools/generate_template.php 2>/dev/null \
-                && log "Template generated." || warn "Template generation failed (non-fatal)"
+                && log "Template generated." \
+                || warn "Template generation failed (non-fatal)"
         fi
     else
-        warn "crm_user still not ready — Apache will start but DB may be unavailable"
+        warn "crm_user still cannot connect after credentials reset — Apache will start but DB may be broken"
+        warn "Check that DB_ROOT_PASSWORD matches the MySQL container's root password"
     fi
 fi
 

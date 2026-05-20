@@ -22,11 +22,12 @@ $pdo = new PDO("mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4
 
 $hash = password_hash('Admin@1234', PASSWORD_BCRYPT, ['cost' => 12]);
 
+// INSERT IGNORE: only seeds the admin if no row with this email exists yet.
+// This prevents overwriting a custom admin password on container restart.
 $pdo->prepare("
-    INSERT INTO users (name, email, password, role, is_active)
+    INSERT IGNORE INTO users (name, email, password, role, is_active)
     VALUES ('Administrator', 'admin@callcenter.com', ?, 'admin', 1)
-    ON DUPLICATE KEY UPDATE password = ?, updated_at = NOW()
-")->execute([$hash, $hash]);
+")->execute([$hash]);
 
 echo "Admin user seeded.\n";
 echo "  Email:    admin@callcenter.com\n";
