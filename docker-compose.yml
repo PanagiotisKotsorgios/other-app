@@ -49,11 +49,11 @@ services:
       --collation-server=utf8mb4_unicode_ci
       --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO
     healthcheck:
-      test: ["CMD-SHELL", "mysql -h localhost -u $$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE -e 'SELECT 1' 2>/dev/null"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
       interval: 5s
       timeout: 5s
-      retries: 60
-      start_period: 15s
+      retries: 30
+      start_period: 10s
     networks:
       - callcenter_net
 

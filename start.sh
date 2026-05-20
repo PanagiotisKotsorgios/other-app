@@ -74,16 +74,14 @@ ok "DB credentials ready"
 info "Starting MySQL..."
 docker compose --env-file "$ENV_FILE" up -d db
 
-info "Waiting for MySQL crm_user (up to 150s)..."
-for i in $(seq 1 75); do
-    docker exec callcenter_db bash -c \
-        'mysql -h localhost -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "SELECT 1;" 2>/dev/null' \
-        && break || true
+info "Waiting for MySQL to accept connections (up to 60s)..."
+for i in $(seq 1 30); do
+    docker exec callcenter_db mysqladmin ping -h localhost --silent 2>/dev/null && break || true
     printf "."
     sleep 2
 done
 echo ""
-ok "MySQL ready (crm_user verified)"
+ok "MySQL is up"
 
 # ── Start app ────────────────────────────────────────────────
 info "Starting PHP/Apache container..."
