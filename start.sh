@@ -50,13 +50,13 @@ if ss -tlnp 2>/dev/null | grep -q ':80 '; then
 fi
 ok "Port 80 is free"
 
-# ── Kill old ngrok (host) ────────────────────────────────────
+# ── Kill old ngrok ───────────────────────────────────────────
 pkill -f "ngrok http" 2>/dev/null || true
 
-# ── Tear down old containers ─────────────────────────────────
+# ── Tear down old containers (keep volumes!) ─────────────────
 info "Removing old containers..."
 docker compose down --remove-orphans 2>/dev/null || true
-docker rm -f callcenter_app callcenter_db callcenter_ngrok 2>/dev/null || true
+docker rm -f callcenter_app callcenter_db 2>/dev/null || true
 ok "Cleaned"
 
 # ── Build image ──────────────────────────────────────────────
@@ -64,11 +64,26 @@ info "Building image (cached after first run)..."
 docker build -t callcenter:latest . || die "Build failed (see above)"
 ok "Image built"
 
-# ── DB credentials ───────────────────────────────────────────
-DB_PASS="CrmSecure$(openssl rand -hex 8)Db"
+# ── DB credentials — reuse if volume already exists ──────────
+# Generating a NEW password every run while keeping the old DB volume
+# causes DB connection failures (MySQL keeps the original password).
+# Solution: persist the password and reuse it on subsequent runs.
+PASS_FILE="/root/.callcenter_db.pass"
 ENV_FILE="/tmp/callcenter.env"
+
+# Check whether the MySQL data volume already has data
+DB_VOLUME=$(docker volume ls --format '{{.Name}}' 2>/dev/null | grep -E 'callcenter.*db_data|db_data' | head -1)
+if [[ -n "$DB_VOLUME" ]] && [[ -f "$PASS_FILE" ]]; then
+    DB_PASS=$(cat "$PASS_FILE")
+    ok "Reusing existing DB credentials (volume: $DB_VOLUME)"
+else
+    DB_PASS="CrmSecure$(openssl rand -hex 8)Db"
+    printf '%s' "$DB_PASS" > "$PASS_FILE"
+    chmod 600 "$PASS_FILE"
+    ok "Generated new DB credentials"
+fi
+
 printf 'DB_PASSWORD=%s\nDB_ROOT_PASSWORD=Root%s\n' "$DB_PASS" "$DB_PASS" > "$ENV_FILE"
-ok "DB credentials ready"
 
 # ── Start MySQL ──────────────────────────────────────────────
 info "Starting MySQL..."
@@ -87,12 +102,11 @@ ok "MySQL is up"
 info "Starting PHP/Apache container..."
 docker compose --env-file "$ENV_FILE" up -d app
 
-info "Waiting for Apache to start (up to 2 min)..."
+info "Waiting for app to be ready (first run takes a few minutes for DB init)..."
 APP_OK=false
-for i in $(seq 1 60); do
-    # Accept any HTTP response (200 or 500) — means Apache is up
+for i in $(seq 1 200); do
     HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost/auth/login 2>/dev/null || echo "000")
-    if [[ "$HTTP_CODE" != "000" ]]; then
+    if [[ "$HTTP_CODE" == "200" ]]; then
         APP_OK=true
         break
     fi
@@ -102,34 +116,12 @@ done
 echo ""
 
 if [[ "$APP_OK" != "true" ]]; then
-    warn "Apache didn't start in time. Container logs:"
-    docker logs callcenter_app --tail=30
+    warn "App didn't fully start. Last status: $(curl -s -o /dev/null -w '%{http_code}' http://localhost/auth/login 2>/dev/null)"
+    warn "Container logs:"
+    docker logs callcenter_app --tail=40
     die "App container failed to start. Fix the issue above and re-run."
 fi
-ok "Apache is up at http://localhost"
-
-# ── Wait for DB to finish init (login page needs it) ─────────
-info "Waiting for DB to be ready (MySQL init can take a few minutes)..."
-for i in $(seq 1 150); do
-    if curl -sf http://localhost/auth/login -o /dev/null 2>/dev/null; then
-        ok "App is live at http://localhost"
-        break
-    fi
-    printf "."
-    sleep 2
-done
-echo ""
-
-# ── Verify Apache is reachable internally ────────────────────
-CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' callcenter_app 2>/dev/null || true)
-info "Container IP: ${CONTAINER_IP}"
-if [[ -n "$CONTAINER_IP" ]]; then
-    if curl -sf "http://${CONTAINER_IP}/auth/login" -o /dev/null 2>/dev/null; then
-        ok "Apache reachable internally at ${CONTAINER_IP}:80"
-    else
-        warn "Apache NOT reachable at ${CONTAINER_IP}:80 — will tunnel via host port instead"
-    fi
-fi
+ok "App is live at http://localhost"
 
 # ── ngrok (run on HOST, tunnel localhost:80) ─────────────────
 PUBLIC_URL=""
@@ -153,9 +145,7 @@ if [[ -n "$NGROK_TOKEN" ]]; then
     info "Starting ngrok tunnel → http://localhost:80 ..."
     pkill -f "ngrok http" 2>/dev/null || true
     sleep 1
-    # Run ngrok on the HOST — it tunnels localhost:80 (Docker container's mapped port)
     nohup ngrok http 80 --log=stdout > /tmp/ngrok.log 2>&1 &
-    NGROK_PID=$!
 
     info "Waiting for tunnel URL..."
     for i in $(seq 1 20); do
@@ -176,12 +166,9 @@ except:
     echo ""
 
     if [[ -n "$PUBLIC_URL" ]]; then
-        # Update APP_URL in container .env (belt-and-suspenders; config also auto-detects from request)
-        docker exec callcenter_app bash -c \
-            "sed -i 's|APP_URL=.*|APP_URL=${PUBLIC_URL}|g' /var/www/html/.env 2>/dev/null; \
-             grep -q 'APP_URL' /var/www/html/.env || echo 'APP_URL=${PUBLIC_URL}' >> /var/www/html/.env" \
-            2>/dev/null || true
         ok "ngrok tunnel active: ${PUBLIC_URL}"
+        # APP_URL auto-detected from HTTP_HOST on each request (see public/index.php)
+        # No .env patching needed — works for any host automatically
     else
         warn "Could not get ngrok URL — check /tmp/ngrok.log"
         cat /tmp/ngrok.log 2>/dev/null | tail -5 || true
@@ -217,7 +204,6 @@ Public URL: ${PUBLIC_URL:-http://localhost}
 Local URL:  http://localhost
 Login:      admin@callcenter.com
 Password:   Admin@1234
-DB Pass:    ${DB_PASS}
 
 Restart: cd ~/callcenter && sudo bash start.sh YOUR_NGROK_TOKEN
 Stop:    docker compose down && pkill ngrok
