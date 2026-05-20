@@ -74,23 +74,24 @@ ok "DB credentials ready"
 info "Starting MySQL..."
 docker compose --env-file "$ENV_FILE" up -d db
 
-info "Waiting for MySQL (up to 90s)..."
-for i in $(seq 1 45); do
-    docker exec callcenter_db mysqladmin ping -h localhost \
-        -u root -p"Root${DB_PASS}" --silent 2>/dev/null && break || true
+info "Waiting for MySQL (up to 150s)..."
+for i in $(seq 1 75); do
+    docker exec callcenter_db mysql -h localhost \
+        -u crm_user -p"${DB_PASS}" call_center \
+        -e "SELECT 1;" >/dev/null 2>&1 && break || true
     printf "."
     sleep 2
 done
 echo ""
-ok "MySQL ready"
+ok "MySQL ready (crm_user verified)"
 
 # ── Start app ────────────────────────────────────────────────
 info "Starting PHP/Apache container..."
 docker compose --env-file "$ENV_FILE" up -d app
 
-info "Waiting for app (up to 120s)..."
+info "Waiting for app (up to 180s)..."
 APP_OK=false
-for i in $(seq 1 60); do
+for i in $(seq 1 90); do
     if curl -sf http://localhost/auth/login -o /dev/null 2>/dev/null; then
         APP_OK=true
         break

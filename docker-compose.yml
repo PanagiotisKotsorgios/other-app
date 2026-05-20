@@ -49,11 +49,11 @@ services:
       --collation-server=utf8mb4_unicode_ci
       --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-RootSecure2024Db}"]
+      test: ["CMD", "mysql", "-h", "localhost", "-u", "crm_user", "-p${DB_PASSWORD:-CrmSecure2024Db}", "call_center", "-e", "SELECT 1"]
       interval: 5s
       timeout: 5s
-      retries: 20
-      start_period: 30s
+      retries: 60
+      start_period: 15s
     networks:
       - callcenter_net
 
