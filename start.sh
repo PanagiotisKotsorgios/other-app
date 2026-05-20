@@ -176,9 +176,11 @@ except:
     echo ""
 
     if [[ -n "$PUBLIC_URL" ]]; then
-        # Update .env inside container with the public URL
-        docker exec callcenter_app \
-            sed -i "s|APP_URL=.*|APP_URL=${PUBLIC_URL}|" /var/www/html/.env 2>/dev/null || true
+        # Update APP_URL in container .env (belt-and-suspenders; config also auto-detects from request)
+        docker exec callcenter_app bash -c \
+            "sed -i 's|APP_URL=.*|APP_URL=${PUBLIC_URL}|g' /var/www/html/.env 2>/dev/null; \
+             grep -q 'APP_URL' /var/www/html/.env || echo 'APP_URL=${PUBLIC_URL}' >> /var/www/html/.env" \
+            2>/dev/null || true
         ok "ngrok tunnel active: ${PUBLIC_URL}"
     else
         warn "Could not get ngrok URL — check /tmp/ngrok.log"

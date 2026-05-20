@@ -1,9 +1,22 @@
 <?php
 
-define('APP_NAME',    $_ENV['APP_NAME']    ?? 'Call Center CRM');
-define('APP_URL',     $_ENV['APP_URL']     ?? 'http://localhost');
-define('APP_ENV',     $_ENV['APP_ENV']     ?? 'production');
-define('APP_DEBUG',   filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN));
+define('APP_NAME', $_ENV['APP_NAME'] ?? 'Call Center CRM');
+define('APP_ENV',  $_ENV['APP_ENV']  ?? 'production');
+define('APP_DEBUG', filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN));
+
+// Detect the public URL from the incoming request so the app works
+// transparently behind ngrok, any reverse proxy, or direct local access.
+// Priority: forwarded request host > .env APP_URL > localhost default.
+(function () {
+    if (!empty($_SERVER['HTTP_HOST'])) {
+        $scheme = $_SERVER['HTTP_X_FORWARDED_PROTO']
+            ?? (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http');
+        define('APP_URL', $scheme . '://' . $_SERVER['HTTP_HOST']);
+    } else {
+        define('APP_URL', $_ENV['APP_URL'] ?? 'http://localhost');
+    }
+})();
+
 define('ROOT_PATH',   dirname(__DIR__));
 define('APP_PATH',    ROOT_PATH . '/app');
 define('PUBLIC_PATH', ROOT_PATH . '/public');
