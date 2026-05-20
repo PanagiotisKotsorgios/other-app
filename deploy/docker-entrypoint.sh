@@ -33,7 +33,7 @@ chown -R www-data:www-data /var/www/html/public/assets/templates 2>/dev/null || 
 
 # ── Wait for MySQL ───────────────────────────────────────────
 log "Waiting for MySQL at ${DB_HOST}:${DB_PORT}..."
-max_tries=90
+max_tries=200
 count=0
 until mysql -h "${DB_HOST}" -P "${DB_PORT}" \
       -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \

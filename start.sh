@@ -87,9 +87,9 @@ ok "MySQL is up"
 info "Starting PHP/Apache container..."
 docker compose --env-file "$ENV_FILE" up -d app
 
-info "Waiting for app (up to 180s)..."
+info "Waiting for app (up to 10 min — MySQL init on first run is slow)..."
 APP_OK=false
-for i in $(seq 1 90); do
+for i in $(seq 1 300); do
     if curl -sf http://localhost/auth/login -o /dev/null 2>/dev/null; then
         APP_OK=true
         break
