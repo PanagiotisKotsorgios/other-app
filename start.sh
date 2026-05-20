@@ -25,6 +25,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# ── Always work from the project directory ───────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR" || die "Cannot cd to project directory: $SCRIPT_DIR"
+
 # ── Ensure root ──────────────────────────────────────────────
 if [[ $EUID -ne 0 ]]; then
     exec sudo bash "$0" "$NGROK_TOKEN"
