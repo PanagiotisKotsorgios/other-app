@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `name`       VARCHAR(120)      NOT NULL,
   `email`      VARCHAR(180)      NOT NULL,
   `password`   VARCHAR(255)      NOT NULL,
-  `role`       ENUM('admin','caller') NOT NULL DEFAULT 'caller',
+  `role`       ENUM('admin','caller','developer','partner') NOT NULL DEFAULT 'caller',
   `phone`      VARCHAR(30)       DEFAULT NULL,
   `avatar`     VARCHAR(255)      DEFAULT NULL,
   `is_active`  TINYINT(1)        NOT NULL DEFAULT 1,

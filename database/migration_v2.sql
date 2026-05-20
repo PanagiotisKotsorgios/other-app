@@ -6,6 +6,10 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- ── 0. Expand users.role ENUM to include developer/partner ───
+ALTER TABLE users MODIFY COLUMN role
+  ENUM('admin','caller','developer','partner') NOT NULL DEFAULT 'caller';
+
 -- ── 1. user_roles pivot ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `user_roles` (
   `user_id` INT UNSIGNED NOT NULL,

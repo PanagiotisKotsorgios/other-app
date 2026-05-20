@@ -117,6 +117,10 @@
                                     <?php if($int['result']): ?><span class="badge bg-light text-dark border ms-1"><?= ucfirst(str_replace('_',' ',$int['result'])) ?></span><?php endif ?>
                                     <?php if($int['duration_min']): ?><span class="badge bg-light text-dark border ms-1"><?= $int['duration_min'] ?>min</span><?php endif ?>
                                 </div>
+                                <form method="POST" action="<?= APP_URL ?>/caller/interactions/<?= $int['id'] ?>/delete" class="d-inline" onsubmit="return confirm('Delete this interaction?')">
+                                    <?= CSRF::field() ?>
+                                    <button class="btn btn-xs btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                </form>
                             </div>
                             <?php if($int['notes']): ?><p class="mb-1 mt-1 small text-muted"><?= nl2br(htmlspecialchars($int['notes'])) ?></p><?php endif ?>
                             <?php if(!empty($int['services'])): ?>

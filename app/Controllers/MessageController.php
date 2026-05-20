@@ -74,9 +74,14 @@ class MessageController extends Controller
         $model   = new User();
         $unread  = (new Message())->unreadCount(Auth::id());
 
-        $recipients = Auth::isAdmin() ? $model->callers() :
-            $model->all('name');
-        $recipients = array_filter($recipients, fn($u) => $u['role'] === (Auth::isAdmin() ? 'caller' : 'admin') || $u['role'] === 'admin');
+        $allUsers   = $model->all('name');
+        if (Auth::isAdmin()) {
+            // Admin can message anyone except themselves
+            $recipients = array_filter($allUsers, fn($u) => $u['id'] !== Auth::id());
+        } else {
+            // Non-admin users can only message admins
+            $recipients = array_filter($allUsers, fn($u) => $u['role'] === 'admin');
+        }
 
         $this->view($this->view_prefix() . 'messages.compose', [
             'title'      => 'New Message',

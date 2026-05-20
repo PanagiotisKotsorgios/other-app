@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/app.css">
+    <script>window.APP_URL = '<?= APP_URL ?>';</script>
 </head>
 <body class="sidebar-body">
 
@@ -127,7 +128,7 @@
             ?>
             <a href="<?= APP_URL ?>/<?= $msgPrefix ?>/messages" class="btn btn-sm btn-light position-relative">
                 <i class="bi bi-bell"></i>
-                <?php if(($unread??0)>0): ?><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:.6rem"><?= $unread ?></span><?php endif ?>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" data-notify-badge style="font-size:.6rem;<?= ($unread??0)>0 ? '' : 'display:none' ?>"><?= $unread??0 ?></span>
             </a>
             <a href="<?= APP_URL ?>/auth/profile" class="btn btn-sm btn-light"><i class="bi bi-person-circle"></i></a>
         </div>

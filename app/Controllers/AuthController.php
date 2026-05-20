@@ -45,7 +45,7 @@ class AuthController extends Controller
         }
 
         Auth::login($user);
-        $this->redirect(APP_URL . (Auth::isAdmin() ? '/admin/dashboard' : '/caller/dashboard'));
+        $this->redirect(Auth::dashboardUrl());
     }
 
     public function logout(): void

@@ -44,7 +44,13 @@
                                     <span class="text-muted small ms-2"><?= date('d M Y H:i', strtotime($int['created_at'])) ?></span>
                                     <?php if($int['result']): ?><span class="badge bg-light text-dark ms-1"><?= ucfirst(str_replace('_',' ',$int['result'])) ?></span><?php endif ?>
                                 </div>
-                                <small class="text-muted"><?= htmlspecialchars($int['caller_name']) ?></small>
+                                <div class="d-flex align-items-center gap-2">
+                                    <small class="text-muted"><?= htmlspecialchars($int['caller_name']) ?></small>
+                                    <form method="POST" action="<?= APP_URL ?>/caller/interactions/<?= $int['id'] ?>/delete" class="d-inline" onsubmit="return confirm('Delete this interaction?')">
+                                        <?= CSRF::field() ?>
+                                        <button class="btn btn-xs btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
                             </div>
                             <?php if($int['notes']): ?><p class="mb-1 mt-1 small"><?= nl2br(htmlspecialchars($int['notes'])) ?></p><?php endif ?>
                             <?php if(!empty($int['services'])): ?>

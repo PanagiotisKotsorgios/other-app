@@ -76,7 +76,7 @@
                 <td><?= htmlspecialchars($b['city'] ?? '') ?></td>
                 <td><?= htmlspecialchars($b['category'] ?? '') ?></td>
                 <td><span class="badge <?= statusBadge($b['status']) ?>"><?= ucfirst(str_replace('_',' ',$b['status'])) ?></span></td>
-                <td><?= htmlspecialchars($b['assigned_caller'] ?? '<em class="text-muted">Unassigned</em>') ?></td>
+                <td><?= $b['assigned_caller'] ? htmlspecialchars($b['assigned_caller']) : '<em class="text-muted">Unassigned</em>' ?></td>
                 <td>
                     <a href="<?= APP_URL ?>/admin/businesses/<?= $b['id'] ?>/edit" class="btn btn-xs btn-outline-primary"><i class="bi bi-pencil"></i></a>
                     <form method="POST" action="<?= APP_URL ?>/admin/businesses/<?= $b['id'] ?>/delete" class="d-inline" onsubmit="return confirm('Delete this business?')">

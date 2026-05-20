@@ -52,6 +52,23 @@ if mysql -h "${DB_HOST}" -P "${DB_PORT}" \
          "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; then
     log "MySQL is ready."
 
+    # ── Apply schema migrations (idempotent) ─────────────────
+    log "Applying schema migrations..."
+    mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+        -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
+        "${DB_DATABASE}" 2>/dev/null <<'EOSQL'
+ALTER TABLE users MODIFY COLUMN role
+  ENUM('admin','caller','developer','partner') NOT NULL DEFAULT 'caller';
+
+CREATE TABLE IF NOT EXISTS `user_roles` (
+  `user_id` INT UNSIGNED NOT NULL,
+  `role`    ENUM('admin','caller','developer','partner') NOT NULL,
+  PRIMARY KEY (`user_id`, `role`),
+  CONSTRAINT `fk_ur_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+EOSQL
+    log "Migrations applied."
+
     # ── Seed admin user if needed ────────────────────────────
     USER_COUNT=$(mysql -h "${DB_HOST}" -P "${DB_PORT}" \
         -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
