@@ -147,8 +147,12 @@ class AdminController extends Controller
     {
         Auth::requireAdmin();
         CSRF::check();
-        (new User())->delete((int)$id);
-        Session::flash('success', 'Caller deleted.');
+        try {
+            (new User())->delete((int)$id);
+            Session::flash('success', 'Caller deleted.');
+        } catch (\RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
+        }
         $this->redirect(APP_URL . '/admin/callers');
     }
 
@@ -282,8 +286,12 @@ class AdminController extends Controller
     {
         Auth::requireAdmin();
         CSRF::check();
-        (new User())->delete((int)$id);
-        Session::flash('success', 'Developer deleted.');
+        try {
+            (new User())->delete((int)$id);
+            Session::flash('success', 'Developer deleted.');
+        } catch (\RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
+        }
         $this->redirect(APP_URL . '/admin/developers');
     }
 
@@ -403,8 +411,12 @@ class AdminController extends Controller
     {
         Auth::requireAdmin();
         CSRF::check();
-        (new User())->delete((int)$id);
-        Session::flash('success', 'Partner deleted.');
+        try {
+            (new User())->delete((int)$id);
+            Session::flash('success', 'Partner deleted.');
+        } catch (\RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
+        }
         $this->redirect(APP_URL . '/admin/partners');
     }
 

@@ -129,8 +129,12 @@ class BusinessController extends Controller
     {
         Auth::requireAdmin();
         CSRF::check();
-        (new Business())->delete((int)$id);
-        Session::flash('success', 'Business deleted.');
+        try {
+            (new Business())->delete((int)$id);
+            Session::flash('success', 'Business deleted.');
+        } catch (\RuntimeException $e) {
+            Session::flash('error', $e->getMessage());
+        }
         $this->redirect(APP_URL . '/admin/businesses');
     }
 

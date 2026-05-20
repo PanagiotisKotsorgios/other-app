@@ -1,7 +1,7 @@
 <?php
 
 define('APP_NAME',    $_ENV['APP_NAME']    ?? 'Call Center CRM');
-define('APP_URL',     $_ENV['APP_URL']     ?? 'http://localhost/call_center/public');
+define('APP_URL',     $_ENV['APP_URL']     ?? 'http://localhost');
 define('APP_ENV',     $_ENV['APP_ENV']     ?? 'production');
 define('APP_DEBUG',   filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN));
 define('ROOT_PATH',   dirname(__DIR__));

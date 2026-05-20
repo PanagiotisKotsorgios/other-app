@@ -18,6 +18,7 @@ services:
       DB_DATABASE: call_center
       DB_USERNAME: crm_user
       DB_PASSWORD: "${DB_PASSWORD:-CrmSecure2024Db}"
+      DB_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-RootSecure2024Db}"
       COMMISSION_RATE: "10"
       UPLOAD_MAX_SIZE: "104857600"
     volumes:

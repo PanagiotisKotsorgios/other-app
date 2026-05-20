@@ -46,8 +46,15 @@ abstract class Model
 
     public function delete(int $id): bool
     {
-        $stmt = $this->db->prepare("DELETE FROM `{$this->table}` WHERE `{$this->primaryKey}` = ?");
-        return $stmt->execute([$id]);
+        try {
+            $stmt = $this->db->prepare("DELETE FROM `{$this->table}` WHERE `{$this->primaryKey}` = ?");
+            return $stmt->execute([$id]);
+        } catch (\PDOException $e) {
+            if (str_contains($e->getMessage(), '1451') || str_contains($e->getCode(), '23000')) {
+                throw new \RuntimeException('Cannot delete: this record has related data (deals, commissions, or documents). Remove those first.');
+            }
+            throw $e;
+        }
     }
 
     public function count(string $where = '', array $params = []): int

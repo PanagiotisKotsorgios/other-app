@@ -21,6 +21,7 @@ DB_PASSWORD="${DB_PASSWORD}"
 COMMISSION_RATE="${COMMISSION_RATE:-10}"
 UPLOAD_MAX_SIZE="${UPLOAD_MAX_SIZE:-104857600}"
 EOF
+chown www-data:www-data /var/www/html/.env
 chmod 640 /var/www/html/.env
 
 # ── Ensure upload dirs exist ─────────────────────────────────
@@ -66,19 +67,20 @@ if mysqladmin ping -h "${DB_HOST}" -P "${DB_PORT}" --silent 2>/dev/null; then
              "${DB_DATABASE}" -e "SELECT 1;" >/dev/null 2>&1; then
         log "MySQL crm_user is ready."
 
-        # ── Apply schema migrations (idempotent) ─────────────────
+        # ── Apply schema migrations as root (guaranteed DDL privileges) ──
         log "Applying schema migrations..."
         mysql -h "${DB_HOST}" -P "${DB_PORT}" \
-            -u "${DB_USERNAME}" -p"${DB_PASSWORD}" \
-            "${DB_DATABASE}" 2>/dev/null <<'EOSQL'
+            -u root -p"${DB_ROOT_PASSWORD:-RootSecure2024Db}" 2>/dev/null <<EOSQL
+USE \`${DB_DATABASE:-call_center}\`;
+
 ALTER TABLE users MODIFY COLUMN role
   ENUM('admin','caller','developer','partner') NOT NULL DEFAULT 'caller';
 
-CREATE TABLE IF NOT EXISTS `user_roles` (
-  `user_id` INT UNSIGNED NOT NULL,
-  `role`    ENUM('admin','caller','developer','partner') NOT NULL,
-  PRIMARY KEY (`user_id`, `role`),
-  CONSTRAINT `fk_ur_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS \`user_roles\` (
+  \`user_id\` INT UNSIGNED NOT NULL,
+  \`role\`    ENUM('admin','caller','developer','partner') NOT NULL,
+  PRIMARY KEY (\`user_id\`, \`role\`),
+  CONSTRAINT \`fk_ur_user\` FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`id\`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 EOSQL
         log "Migrations applied."

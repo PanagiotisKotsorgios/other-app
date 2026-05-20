@@ -44,6 +44,7 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
       echo "max_input_time = 300"; \
       echo "memory_limit = 512M"; \
       echo "date.timezone = Europe/Athens"; \
+      echo "variables_order = EGPCS"; \
     } >> "$PHP_INI_DIR/php.ini"
 
 # Apache VirtualHost
