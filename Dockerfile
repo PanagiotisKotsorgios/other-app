@@ -31,7 +31,7 @@ RUN set -eux \
       zip \
       exif \
       bcmath \
- && a2enmod rewrite headers expires deflate \
+ && a2enmod rewrite headers expires deflate remoteip \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -45,6 +45,9 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
       echo "memory_limit = 512M"; \
       echo "date.timezone = Europe/Athens"; \
       echo "variables_order = EGPCS"; \
+      echo "log_errors = On"; \
+      echo "display_errors = Off"; \
+      echo "error_log = /proc/self/fd/2"; \
     } >> "$PHP_INI_DIR/php.ini"
 
 # Apache VirtualHost

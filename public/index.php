@@ -4,6 +4,41 @@ declare(strict_types=1);
 
 define('ROOT_PATH_BOOTSTRAP', dirname(__DIR__));
 
+// Always log PHP errors to the error_log (Apache stderr → docker logs)
+ini_set('log_errors', '1');
+ini_set('display_errors', '0'); // never show raw errors to users
+
+// Global exception + error handler — catches everything not caught by controllers
+set_exception_handler(function (\Throwable $e): void {
+    $debug = defined('APP_DEBUG') && APP_DEBUG;
+    $msg   = sprintf('[%s] Uncaught %s: %s in %s:%d',
+        date('Y-m-d H:i:s'),
+        get_class($e),
+        $e->getMessage(),
+        $e->getFile(),
+        $e->getLine()
+    );
+    error_log($msg);
+    error_log($e->getTraceAsString());
+
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+    http_response_code(500);
+    if ($debug) {
+        echo '<!DOCTYPE html><html><body>'
+            . '<h1>500 — Internal Server Error</h1>'
+            . '<pre>' . htmlspecialchars($e->getMessage() . "\n\n" . $e->getTraceAsString()) . '</pre>'
+            . '</body></html>';
+    } else {
+        echo '<!DOCTYPE html><html><body>'
+            . '<h1>500 — Internal Server Error</h1>'
+            . '<p>Something went wrong. Please try again later.</p>'
+            . '</body></html>';
+    }
+    exit;
+});
+
 // Load Composer autoloader
 require ROOT_PATH_BOOTSTRAP . '/vendor/autoload.php';
 

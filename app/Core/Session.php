@@ -7,12 +7,16 @@ class Session
     public static function start(): void
     {
         if (session_status() === PHP_SESSION_NONE) {
+            // Detect HTTPS — ngrok/reverse-proxy sends X-Forwarded-Proto: https
+            $isHttps = (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+                    || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+
             session_set_cookie_params([
                 'lifetime' => 0,
                 'path'     => '/',
-                'secure'   => false,
+                'secure'   => $isHttps,   // Secure cookie over HTTPS
                 'httponly' => true,
-                'samesite' => 'Strict',
+                'samesite' => 'Lax',      // Lax: allows links from external sites; Strict broke ngrok navigation
             ]);
             session_start();
         }

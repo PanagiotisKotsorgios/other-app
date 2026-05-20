@@ -19,8 +19,6 @@ class Auth
     public static function logout(): void
     {
         Session::destroy();
-        session_start();
-        session_regenerate_id(true);
     }
 
     public static function check(): bool
