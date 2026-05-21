@@ -98,12 +98,18 @@ EOSQL
         warn "Root DB setup had errors — will try crm_user connection anyway"
     fi
 
-    # ── Apply V2 migrations (fully idempotent — safe to run every start) ──
+    # ── Apply migrations (fully idempotent — safe to run every start) ──
     if [ -f /var/www/html/database/migration_v2.sql ]; then
         log "Applying migration_v2.sql..."
         mysql_root "${DB_DATABASE:-call_center}" < /var/www/html/database/migration_v2.sql 2>/dev/null \
             && log "migration_v2.sql applied." \
             || warn "migration_v2.sql had errors (non-fatal — tables may already exist)"
+    fi
+    if [ -f /var/www/html/database/migration_v3.sql ]; then
+        log "Applying migration_v3.sql..."
+        mysql_root "${DB_DATABASE:-call_center}" < /var/www/html/database/migration_v3.sql 2>/dev/null \
+            && log "migration_v3.sql applied." \
+            || warn "migration_v3.sql had errors (non-fatal — tables may already exist)"
     fi
 
     # ── Verify crm_user can connect ──────────────────────────────
