@@ -1,52 +1,54 @@
-<?php use App\Core\CSRF; ?>
-<!-- Summary Cards -->
+<?php use App\Core\CSRF;
+require_once __DIR__ . '/../../_partials/gr_helpers.php';
+?>
+<!-- Κάρτες Σύνοψης -->
 <div class="row g-3 mb-3 mt-1">
     <div class="col-md-3">
         <div class="kpi-card kpi-blue">
             <div class="kpi-icon"><i class="bi bi-receipt-cutoff"></i></div>
             <div class="kpi-value">€<?= number_format($stats['total_invoiced'] ?? 0, 2) ?></div>
-            <div class="kpi-label">Total Invoiced</div>
+            <div class="kpi-label">Συνολικά Τιμολογημένα</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="kpi-card kpi-green">
             <div class="kpi-icon"><i class="bi bi-check-circle"></i></div>
             <div class="kpi-value">€<?= number_format($stats['collected'] ?? 0, 2) ?></div>
-            <div class="kpi-label">Collected</div>
+            <div class="kpi-label">Εισπραχθέντα</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="kpi-card kpi-red">
             <div class="kpi-icon"><i class="bi bi-hourglass-split"></i></div>
             <div class="kpi-value">€<?= number_format($stats['outstanding'] ?? 0, 2) ?></div>
-            <div class="kpi-label">Outstanding</div>
+            <div class="kpi-label">Εκκρεμή</div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="kpi-card kpi-orange">
             <div class="kpi-icon"><i class="bi bi-file-earmark-text"></i></div>
             <div class="kpi-value"><?= $stats['invoice_count'] ?? 0 ?></div>
-            <div class="kpi-label">Total Invoices</div>
+            <div class="kpi-label">Σύνολο Τιμολογίων</div>
         </div>
     </div>
 </div>
 
-<!-- Filters -->
+<!-- Φίλτρα -->
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search company..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Αναζήτηση εταιρίας..." value="<?= htmlspecialchars($filters['search'] ?? '') ?>">
             </div>
             <div class="col-md-2">
                 <select name="status" class="form-select form-select-sm">
-                    <option value="">All Statuses</option>
+                    <option value="">Όλες οι Καταστάσεις</option>
                     <?php foreach (['draft','issued','sent','paid'] as $s): ?>
-                    <option value="<?= $s ?>" <?= ($filters['status'] ?? '') === $s ? 'selected' : '' ?>><?= ucfirst($s) ?></option>
+                    <option value="<?= $s ?>" <?= ($filters['status'] ?? '') === $s ? 'selected' : '' ?>><?= grStatus($s) ?></option>
                     <?php endforeach ?>
                 </select>
             </div>
-            <div class="col-auto"><button class="btn btn-primary btn-sm">Filter</button></div>
+            <div class="col-auto"><button class="btn btn-primary btn-sm">Φίλτρο</button></div>
         </form>
     </div>
 </div>
@@ -56,8 +58,8 @@
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>#</th><th>Invoice No</th><th>Business</th><th>Amount</th>
-                    <th>VAT</th><th>Total</th><th>Status</th><th>Issued</th><th>Due</th><th>Actions</th>
+                    <th>#</th><th>Αρ. Τιμολογίου</th><th>Επιχείρηση</th><th>Ποσό</th>
+                    <th>ΦΠΑ</th><th>Σύνολο</th><th>Κατάσταση</th><th>Εκδόθηκε</th><th>Λήξη</th><th>Ενέργειες</th>
                 </tr>
             </thead>
             <tbody>
@@ -76,28 +78,28 @@
                         'sent'   => 'bg-primary',
                         'paid'   => 'bg-success',
                         default  => 'bg-secondary'
-                    } ?>"><?= ucfirst($inv['status']) ?></span>
+                    } ?>"><?= grStatus($inv['status']) ?></span>
                 </td>
                 <td class="small text-muted"><?= $inv['issued_at'] ? date('d M Y', strtotime($inv['issued_at'])) : '—' ?></td>
                 <td class="small <?= ($inv['due_at'] && $inv['status'] !== 'paid' && strtotime($inv['due_at']) < time()) ? 'text-danger fw-semibold' : 'text-muted' ?>">
                     <?= $inv['due_at'] ? date('d M Y', strtotime($inv['due_at'])) : '—' ?>
                 </td>
                 <td class="d-flex gap-1">
-                    <a href="<?= APP_URL ?>/admin/deals/<?= $inv['deal_id'] ?>" class="btn btn-xs btn-outline-primary" title="View Deal"><i class="bi bi-eye"></i></a>
+                    <a href="<?= APP_URL ?>/admin/deals/<?= $inv['deal_id'] ?>" class="btn btn-xs btn-outline-primary" title="Προβολή Συμφωνίας"><i class="bi bi-eye"></i></a>
                     <?php if ($inv['filename']): ?>
-                    <a href="<?= APP_URL ?>/admin/documents/invoices/<?= $inv['id'] ?>/download" class="btn btn-xs btn-outline-secondary" title="Download"><i class="bi bi-download"></i></a>
+                    <a href="<?= APP_URL ?>/admin/documents/invoices/<?= $inv['id'] ?>/download" class="btn btn-xs btn-outline-secondary" title="Λήψη"><i class="bi bi-download"></i></a>
                     <?php endif ?>
                     <?php if ($inv['status'] !== 'paid'): ?>
                     <form method="POST" action="<?= APP_URL ?>/admin/documents/invoices/<?= $inv['id'] ?>/mark-paid" class="d-inline">
                         <?= CSRF::field() ?>
-                        <button class="btn btn-xs btn-outline-success" title="Mark Paid"><i class="bi bi-check2"></i></button>
+                        <button class="btn btn-xs btn-outline-success" title="Σήμανση Πληρωμένου"><i class="bi bi-check2"></i></button>
                     </form>
                     <?php endif ?>
                 </td>
             </tr>
             <?php endforeach ?>
             <?php if (empty($data)): ?>
-            <tr><td colspan="10" class="text-center py-4 text-muted">No invoices found.</td></tr>
+            <tr><td colspan="10" class="text-center py-4 text-muted">Δεν βρέθηκαν τιμολόγια.</td></tr>
             <?php endif ?>
             </tbody>
         </table>

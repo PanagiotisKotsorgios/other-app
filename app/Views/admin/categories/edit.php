@@ -1,9 +1,9 @@
 <?php use App\Core\CSRF; ?>
 
 <div class="page-header">
-    <h1 class="page-title">Edit Category</h1>
+    <h1 class="page-title">Επεξεργασία Κατηγορίας</h1>
     <a href="<?= APP_URL ?>/admin/categories" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i>Back
+        <i class="bi bi-arrow-left me-1"></i>Πίσω
     </a>
 </div>
 
@@ -21,34 +21,34 @@
     <?php endif ?>
 
     <div class="card">
-        <div class="card-header fw-semibold"><i class="bi bi-award me-1"></i>Category Details</div>
+        <div class="card-header fw-semibold"><i class="bi bi-award me-1"></i>Στοιχεία Κατηγορίας</div>
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-sm-4">
-                    <label class="form-label">Name *</label>
+                    <label class="form-label">Όνομα *</label>
                     <input type="text" name="name" class="form-control" value="<?= htmlspecialchars($category['name']) ?>"
                            maxlength="20" required>
                 </div>
                 <div class="col-sm-5">
-                    <label class="form-label">Label</label>
+                    <label class="form-label">Ετικέτα</label>
                     <input type="text" name="label" class="form-control" value="<?= htmlspecialchars($category['label']) ?>"
                            maxlength="100">
                 </div>
                 <div class="col-sm-3">
-                    <label class="form-label">Sort Order</label>
+                    <label class="form-label">Σειρά Ταξινόμησης</label>
                     <input type="number" name="sort_order" class="form-control" value="<?= (int)$category['sort_order'] ?>" min="0">
                 </div>
                 <div class="col-12">
-                    <label class="form-label">Color</label>
+                    <label class="form-label">Χρώμα</label>
                     <div class="d-flex gap-2 flex-wrap">
                         <?php
                         $colors = [
-                            'green'  => ['bg'=>'#dcfce7','text'=>'#166534','label'=>'Green'],
-                            'blue'   => ['bg'=>'#dbeafe','text'=>'#1d4ed8','label'=>'Blue'],
-                            'orange' => ['bg'=>'#fff7ed','text'=>'#c2410c','label'=>'Orange'],
-                            'red'    => ['bg'=>'#fee2e2','text'=>'#b91c1c','label'=>'Red'],
-                            'purple' => ['bg'=>'#f3e8ff','text'=>'#7e22ce','label'=>'Purple'],
-                            'teal'   => ['bg'=>'#ccfbf1','text'=>'#0f766e','label'=>'Teal'],
+                            'green'  => ['bg'=>'#dcfce7','text'=>'#166534','label'=>'Πράσινο'],
+                            'blue'   => ['bg'=>'#dbeafe','text'=>'#1d4ed8','label'=>'Μπλε'],
+                            'orange' => ['bg'=>'#fff7ed','text'=>'#c2410c','label'=>'Πορτοκαλί'],
+                            'red'    => ['bg'=>'#fee2e2','text'=>'#b91c1c','label'=>'Κόκκινο'],
+                            'purple' => ['bg'=>'#f3e8ff','text'=>'#7e22ce','label'=>'Μωβ'],
+                            'teal'   => ['bg'=>'#ccfbf1','text'=>'#0f766e','label'=>'Τιρκουάζ'],
                         ];
                         foreach ($colors as $key => $c):
                         ?>
@@ -63,7 +63,7 @@
                     </div>
                 </div>
                 <div class="col-12">
-                    <label class="form-label">Description</label>
+                    <label class="form-label">Περιγραφή</label>
                     <textarea name="description" class="form-control" rows="2"><?= htmlspecialchars($category['description'] ?? '') ?></textarea>
                 </div>
             </div>
@@ -71,11 +71,11 @@
     </div>
 
     <div class="card mt-3">
-        <div class="card-header fw-semibold"><i class="bi bi-percent me-1"></i>Commission Rates</div>
+        <div class="card-header fw-semibold"><i class="bi bi-percent me-1"></i>Ποσοστά Προμήθειας</div>
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-sm-4">
-                    <label class="form-label">Caller Rate (%)</label>
+                    <label class="form-label">Ποσοστό Τηλεφωνητή (%)</label>
                     <div class="input-group">
                         <input type="number" name="caller_rate" class="form-control"
                                value="<?= number_format($category['caller_rate'], 2) ?>"
@@ -84,7 +84,7 @@
                     </div>
                 </div>
                 <div class="col-sm-4">
-                    <label class="form-label">Developer Rate (%)</label>
+                    <label class="form-label">Ποσοστό Προγραμματιστή (%)</label>
                     <div class="input-group">
                         <input type="number" name="developer_rate" class="form-control"
                                value="<?= number_format($category['developer_rate'], 2) ?>"
@@ -93,7 +93,7 @@
                     </div>
                 </div>
                 <div class="col-sm-4">
-                    <label class="form-label">Partner Rate (%)</label>
+                    <label class="form-label">Ποσοστό Συνεργάτη (%)</label>
                     <div class="input-group">
                         <input type="number" name="partner_rate" class="form-control"
                                value="<?= number_format($category['partner_rate'], 2) ?>"
@@ -106,8 +106,8 @@
     </div>
 
     <div class="d-flex gap-2 mt-3 justify-content-end">
-        <a href="<?= APP_URL ?>/admin/categories" class="btn btn-outline-secondary">Cancel</a>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Save Changes</button>
+        <a href="<?= APP_URL ?>/admin/categories" class="btn btn-outline-secondary">Ακύρωση</a>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Αποθήκευση Αλλαγών</button>
     </div>
 </form>
 

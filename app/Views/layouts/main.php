@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($title ?? 'Dashboard') ?> — <?= APP_NAME ?></title>
+    <title><?= htmlspecialchars($title ?? 'Πίνακας Ελέγχου') ?> — <?= APP_NAME ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
@@ -15,13 +15,15 @@
 </head>
 <body class="sidebar-body">
 
-<!-- Mobile backdrop -->
+<?php require_once __DIR__ . '/../_partials/gr_helpers.php'; ?>
+
+<!-- Υπόβαθρο κινητού -->
 <div id="sidebarBackdrop"></div>
 
-<!-- Sidebar -->
+<!-- Πλαϊνή μπάρα -->
 <nav id="sidebar" class="sidebar">
 
-    <!-- Brand -->
+    <!-- Λογότυπο -->
     <a class="sidebar-brand" href="<?= APP_URL ?>">
         <div class="sidebar-brand-icon"><i class="bi bi-headset"></i></div>
         <span class="sidebar-brand-text"><?= htmlspecialchars(APP_NAME) ?></span>
@@ -45,74 +47,74 @@
     <ul class="sidebar-nav">
 
         <?php if ($role === 'admin'): ?>
-        <li class="sidebar-section">Main</li>
-        <?php navLink(APP_URL.'/admin/dashboard','speedometer2','Dashboard',$path) ?>
-        <?php navLink(APP_URL.'/admin/businesses','building','Businesses',$path) ?>
-        <?php navLink(APP_URL.'/admin/import','file-earmark-arrow-up','Import Excel',$path) ?>
+        <li class="sidebar-section">Κύριο</li>
+        <?php navLink(APP_URL.'/admin/dashboard','speedometer2','Πίνακας Ελέγχου',$path) ?>
+        <?php navLink(APP_URL.'/admin/businesses','building','Επιχειρήσεις',$path) ?>
+        <?php navLink(APP_URL.'/admin/import','file-earmark-arrow-up','Εισαγωγή Excel',$path) ?>
 
-        <li class="sidebar-section">People</li>
-        <?php navLink(APP_URL.'/admin/callers','people','Callers',$path) ?>
-        <?php navLink(APP_URL.'/admin/developers','code-slash','Developers',$path) ?>
-        <?php navLink(APP_URL.'/admin/partners','handshake','Partners',$path) ?>
-        <?php navLink(APP_URL.'/admin/categories','award','Categories',$path) ?>
+        <li class="sidebar-section">Άνθρωποι</li>
+        <?php navLink(APP_URL.'/admin/callers','people','Τηλεφωνητές',$path) ?>
+        <?php navLink(APP_URL.'/admin/developers','code-slash','Προγραμματιστές',$path) ?>
+        <?php navLink(APP_URL.'/admin/partners','handshake','Συνεργάτες',$path) ?>
+        <?php navLink(APP_URL.'/admin/categories','award','Κατηγορίες',$path) ?>
 
-        <li class="sidebar-section">Finance</li>
-        <?php navLink(APP_URL.'/admin/deals','bag-check','Deals',$path) ?>
-        <?php navLink(APP_URL.'/admin/projects','kanban','Projects',$path) ?>
-        <?php navLink(APP_URL.'/admin/commissions','currency-euro','Commissions',$path) ?>
-        <?php navLink(APP_URL.'/admin/financials','graph-up-arrow','Financials',$path) ?>
+        <li class="sidebar-section">Οικονομικά</li>
+        <?php navLink(APP_URL.'/admin/deals','bag-check','Συμφωνίες',$path) ?>
+        <?php navLink(APP_URL.'/admin/projects','kanban','Έργα',$path) ?>
+        <?php navLink(APP_URL.'/admin/commissions','currency-euro','Προμήθειες',$path) ?>
+        <?php navLink(APP_URL.'/admin/financials','graph-up-arrow','Οικονομικές Αναφορές',$path) ?>
 
-        <li class="sidebar-section">Other</li>
+        <li class="sidebar-section">Άλλα</li>
         <li>
             <a href="<?= APP_URL ?>/admin/messages" class="nav-link <?= str_contains($path,'messages')?'active':'' ?>">
                 <i class="bi bi-envelope"></i>
-                <span>Messages</span>
+                <span>Μηνύματα</span>
                 <?php if(($unread??0)>0): ?><span class="badge solid-danger ms-auto"><?= $unread ?></span><?php endif ?>
             </a>
         </li>
 
         <?php elseif ($role === 'developer'): ?>
-        <li class="sidebar-section">Main</li>
-        <?php navLink(APP_URL.'/developer/dashboard','speedometer2','Dashboard',$path) ?>
-        <?php navLink(APP_URL.'/developer/projects','kanban','My Projects',$path) ?>
-        <?php navLink(APP_URL.'/developer/commissions','currency-euro','Commissions',$path) ?>
+        <li class="sidebar-section">Κύριο</li>
+        <?php navLink(APP_URL.'/developer/dashboard','speedometer2','Πίνακας Ελέγχου',$path) ?>
+        <?php navLink(APP_URL.'/developer/projects','kanban','Τα Έργα μου',$path) ?>
+        <?php navLink(APP_URL.'/developer/commissions','currency-euro','Προμήθειες',$path) ?>
         <li>
             <a href="<?= APP_URL ?>/caller/messages" class="nav-link <?= str_contains($path,'messages')?'active':'' ?>">
                 <i class="bi bi-envelope"></i>
-                <span>Messages</span>
+                <span>Μηνύματα</span>
                 <?php if(($unread??0)>0): ?><span class="badge solid-danger ms-auto"><?= $unread ?></span><?php endif ?>
             </a>
         </li>
 
         <?php elseif ($role === 'partner'): ?>
-        <li class="sidebar-section">Main</li>
-        <?php navLink(APP_URL.'/partner/dashboard','speedometer2','Dashboard',$path) ?>
-        <?php navLink(APP_URL.'/partner/referrals','share','My Referrals',$path) ?>
-        <?php navLink(APP_URL.'/partner/commissions','currency-euro','Commissions',$path) ?>
+        <li class="sidebar-section">Κύριο</li>
+        <?php navLink(APP_URL.'/partner/dashboard','speedometer2','Πίνακας Ελέγχου',$path) ?>
+        <?php navLink(APP_URL.'/partner/referrals','share','Οι Παραπομπές μου',$path) ?>
+        <?php navLink(APP_URL.'/partner/commissions','currency-euro','Προμήθειες',$path) ?>
         <li>
             <a href="<?= APP_URL ?>/caller/messages" class="nav-link <?= str_contains($path,'messages')?'active':'' ?>">
                 <i class="bi bi-envelope"></i>
-                <span>Messages</span>
+                <span>Μηνύματα</span>
                 <?php if(($unread??0)>0): ?><span class="badge solid-danger ms-auto"><?= $unread ?></span><?php endif ?>
             </a>
         </li>
 
         <?php else: /* caller + multi-role */ ?>
-        <li class="sidebar-section">Main</li>
-        <?php navLink(APP_URL.'/caller/dashboard','speedometer2','Dashboard',$path) ?>
-        <?php navLink(APP_URL.'/caller/businesses','building','My Businesses',$path) ?>
-        <?php navLink(APP_URL.'/caller/deals','bag-check','My Deals',$path) ?>
-        <?php navLink(APP_URL.'/caller/commissions','currency-euro','Commissions',$path) ?>
+        <li class="sidebar-section">Κύριο</li>
+        <?php navLink(APP_URL.'/caller/dashboard','speedometer2','Πίνακας Ελέγχου',$path) ?>
+        <?php navLink(APP_URL.'/caller/businesses','building','Οι Επιχειρήσεις μου',$path) ?>
+        <?php navLink(APP_URL.'/caller/deals','bag-check','Οι Συμφωνίες μου',$path) ?>
+        <?php navLink(APP_URL.'/caller/commissions','currency-euro','Προμήθειες',$path) ?>
         <?php if ($isDev): ?>
-        <?php navLink(APP_URL.'/developer/projects','kanban','Dev Projects',$path) ?>
+        <?php navLink(APP_URL.'/developer/projects','kanban','Έργα Dev',$path) ?>
         <?php endif ?>
         <?php if ($isPartner): ?>
-        <?php navLink(APP_URL.'/partner/referrals','share','Referrals',$path) ?>
+        <?php navLink(APP_URL.'/partner/referrals','share','Παραπομπές',$path) ?>
         <?php endif ?>
         <li>
             <a href="<?= APP_URL ?>/caller/messages" class="nav-link <?= str_contains($path,'messages')?'active':'' ?>">
                 <i class="bi bi-envelope"></i>
-                <span>Messages</span>
+                <span>Μηνύματα</span>
                 <?php if(($unread??0)>0): ?><span class="badge solid-danger ms-auto"><?= $unread ?></span><?php endif ?>
             </a>
         </li>
@@ -120,15 +122,15 @@
 
     </ul>
 
-    <!-- User footer -->
+    <!-- Υποσέλιδο χρήστη -->
     <div class="sidebar-footer">
         <div class="sidebar-user">
             <div class="sidebar-avatar"><?= strtoupper(substr(Auth::name(),0,1)) ?></div>
             <div class="sidebar-user-info">
                 <div class="sidebar-user-name"><?= htmlspecialchars(Auth::name()) ?></div>
-                <div class="sidebar-user-role"><?= ucfirst($role) ?></div>
+                <div class="sidebar-user-role"><?= grRole($role) ?></div>
             </div>
-            <a href="<?= APP_URL ?>/auth/logout" class="sidebar-logout" title="Sign out">
+            <a href="<?= APP_URL ?>/auth/logout" class="sidebar-logout" title="Αποσύνδεση">
                 <i class="bi bi-box-arrow-right"></i>
             </a>
         </div>
@@ -136,12 +138,12 @@
 
 </nav>
 
-<!-- Main -->
+<!-- Κύριο περιεχόμενο -->
 <div id="main-content" class="main-content">
 
-    <!-- Topbar -->
+    <!-- Μπάρα κορυφής -->
     <div class="topbar">
-        <button class="topbar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+        <button class="topbar-toggle" id="sidebarToggle" aria-label="Εναλλαγή πλαϊνής μπάρας">
             <i class="bi bi-list"></i>
         </button>
         <h1 class="topbar-title"><?= htmlspecialchars($title ?? '') ?></h1>
@@ -152,17 +154,17 @@
                 default     => 'caller',
             };
             ?>
-            <a href="<?= APP_URL ?>/<?= $msgPrefix ?>/messages" class="topbar-btn" title="Messages">
+            <a href="<?= APP_URL ?>/<?= $msgPrefix ?>/messages" class="topbar-btn" title="Μηνύματα">
                 <i class="bi bi-bell"></i>
                 <?php if(($unread??0)>0): ?><span class="topbar-notif-dot" data-notify-badge></span><?php endif ?>
             </a>
-            <a href="<?= APP_URL ?>/auth/profile" class="topbar-btn" title="Profile">
+            <a href="<?= APP_URL ?>/auth/profile" class="topbar-btn" title="Προφίλ">
                 <i class="bi bi-person-circle"></i>
             </a>
         </div>
     </div>
 
-    <!-- Flash messages -->
+    <!-- Μηνύματα flash -->
     <?php
     use App\Core\Session;
     $flashSuccess = Session::getFlash('success');
@@ -175,27 +177,27 @@
         <div class="flash-alert flash-success" role="alert">
             <i class="bi bi-check-circle-fill"></i>
             <span><?= htmlspecialchars($flashSuccess) ?></span>
-            <button class="flash-close" aria-label="Dismiss"><i class="bi bi-x-lg"></i></button>
+            <button class="flash-close" aria-label="Κλείσιμο"><i class="bi bi-x-lg"></i></button>
         </div>
         <?php endif ?>
         <?php if ($flashError): ?>
         <div class="flash-alert flash-danger" role="alert">
             <i class="bi bi-exclamation-triangle-fill"></i>
             <span><?= htmlspecialchars($flashError) ?></span>
-            <button class="flash-close" aria-label="Dismiss"><i class="bi bi-x-lg"></i></button>
+            <button class="flash-close" aria-label="Κλείσιμο"><i class="bi bi-x-lg"></i></button>
         </div>
         <?php endif ?>
         <?php if ($flashErrors): ?>
         <div class="flash-alert flash-danger" role="alert">
             <i class="bi bi-exclamation-triangle-fill"></i>
             <ul class="mb-0 ps-3"><?php foreach ($flashErrors as $e): ?><li><?= htmlspecialchars($e) ?></li><?php endforeach ?></ul>
-            <button class="flash-close" aria-label="Dismiss"><i class="bi bi-x-lg"></i></button>
+            <button class="flash-close" aria-label="Κλείσιμο"><i class="bi bi-x-lg"></i></button>
         </div>
         <?php endif ?>
     </div>
     <?php endif ?>
 
-    <!-- Page content -->
+    <!-- Περιεχόμενο σελίδας -->
     <div class="page-content">
         <?= $content ?>
     </div>

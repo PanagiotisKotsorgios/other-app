@@ -1,24 +1,24 @@
-<!-- E:\call_center\app\Views\admin\projects\index.php -->
+<?php require_once __DIR__ . '/../../_partials/gr_helpers.php'; ?>
 <div class="row g-3 mt-1 mb-3">
-    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm text-center p-3"><div class="fs-3 fw-bold text-secondary"><?= $stats['awaiting'] ?? 0 ?></div><div class="small text-muted">Awaiting</div></div></div>
-    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm text-center p-3"><div class="fs-3 fw-bold text-primary"><?= $stats['in_progress'] ?? 0 ?></div><div class="small text-muted">In Progress</div></div></div>
-    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm text-center p-3"><div class="fs-3 fw-bold text-danger"><?= $stats['overdue'] ?? 0 ?></div><div class="small text-muted">Overdue</div></div></div>
-    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm text-center p-3"><div class="fs-3 fw-bold text-success"><?= $stats['completed'] ?? 0 ?></div><div class="small text-muted">Completed</div></div></div>
+    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm text-center p-3"><div class="fs-3 fw-bold text-secondary"><?= $stats['awaiting'] ?? 0 ?></div><div class="small text-muted">Αναμονή</div></div></div>
+    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm text-center p-3"><div class="fs-3 fw-bold text-primary"><?= $stats['in_progress'] ?? 0 ?></div><div class="small text-muted">Σε Εξέλιξη</div></div></div>
+    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm text-center p-3"><div class="fs-3 fw-bold text-danger"><?= $stats['overdue'] ?? 0 ?></div><div class="small text-muted">Εκπρόθεσμα</div></div></div>
+    <div class="col-6 col-md-3"><div class="card border-0 shadow-sm text-center p-3"><div class="fs-3 fw-bold text-success"><?= $stats['completed'] ?? 0 ?></div><div class="small text-muted">Ολοκληρωμένα</div></div></div>
 </div>
 
-<!-- Filters -->
+<!-- Φίλτρα -->
 <form method="GET" class="row g-2 mb-3">
     <div class="col-md-3">
         <select name="status" class="form-select form-select-sm">
-            <option value="">All Statuses</option>
+            <option value="">Όλες οι Καταστάσεις</option>
             <?php foreach (['awaiting_assignment','in_progress','testing','on_hold','completed'] as $s): ?>
-            <option value="<?= $s ?>" <?= ($filters['status']??'')===$s?'selected':'' ?>><?= ucfirst(str_replace('_',' ',$s)) ?></option>
+            <option value="<?= $s ?>" <?= ($filters['status']??'')===$s?'selected':'' ?>><?= grStatus($s) ?></option>
             <?php endforeach ?>
         </select>
     </div>
     <div class="col-md-3">
         <select name="developer_id" class="form-select form-select-sm">
-            <option value="">All Developers</option>
+            <option value="">Όλοι οι Προγραμματιστές</option>
             <?php foreach ($developers as $dev): ?>
             <option value="<?= $dev['id'] ?>" <?= ($filters['developer_id']??'')==$dev['id']?'selected':'' ?>><?= htmlspecialchars($dev['name']) ?></option>
             <?php endforeach ?>
@@ -26,17 +26,17 @@
     </div>
     <div class="col-md-3">
         <select name="priority" class="form-select form-select-sm">
-            <option value="">All Priorities</option>
+            <option value="">Όλες οι Προτεραιότητες</option>
             <?php foreach (['low','medium','high','urgent'] as $p): ?>
-            <option value="<?= $p ?>" <?= ($filters['priority']??'')===$p?'selected':'' ?>><?= ucfirst($p) ?></option>
+            <option value="<?= $p ?>" <?= ($filters['priority']??'')===$p?'selected':'' ?>><?= grPriority($p) ?></option>
             <?php endforeach ?>
         </select>
     </div>
     <div class="col-md-2">
-        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search..." value="<?= htmlspecialchars($filters['search']??'') ?>">
+        <input type="text" name="search" class="form-control form-control-sm" placeholder="Αναζήτηση..." value="<?= htmlspecialchars($filters['search']??'') ?>">
     </div>
     <div class="col-md-1">
-        <button class="btn btn-sm btn-primary w-100">Filter</button>
+        <button class="btn btn-sm btn-primary w-100">Φίλτρο</button>
     </div>
 </form>
 
@@ -46,14 +46,14 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Title</th>
-                        <th>Business</th>
-                        <th>Developer</th>
-                        <th>Status</th>
-                        <th>Priority</th>
-                        <th>Deadline</th>
-                        <th>Budget</th>
-                        <th>Progress</th>
+                        <th>Τίτλος</th>
+                        <th>Επιχείρηση</th>
+                        <th>Προγραμματιστής</th>
+                        <th>Κατάσταση</th>
+                        <th>Προτεραιότητα</th>
+                        <th>Προθεσμία</th>
+                        <th>Προϋπολογισμός</th>
+                        <th>Πρόοδος</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -71,38 +71,38 @@
                         <td><?= htmlspecialchars($proj['developer_name'] ?? '—') ?></td>
                         <td>
                             <span class="badge <?= match($proj['status']){'awaiting_assignment'=>'bg-secondary','in_progress'=>'bg-primary','testing'=>'bg-info text-dark','on_hold'=>'bg-warning text-dark','completed'=>'bg-success',default=>'bg-secondary'} ?>">
-                                <?= ucfirst(str_replace('_',' ',$proj['status'])) ?>
+                                <?= grStatus($proj['status']) ?>
                             </span>
                         </td>
                         <td>
                             <span class="badge <?= match($proj['priority']){'low'=>'bg-light text-dark','medium'=>'bg-info text-dark','high'=>'bg-warning text-dark','urgent'=>'bg-danger',default=>'bg-secondary'} ?>">
-                                <?= ucfirst($proj['priority']) ?>
+                                <?= grPriority($proj['priority']) ?>
                             </span>
                         </td>
                         <td>
                             <?php if($proj['deadline']): ?>
                                 <?= date('d M Y', strtotime($proj['deadline'])) ?>
-                                <?php if($isOverdue): ?><span class="badge bg-danger ms-1">Overdue</span><?php endif ?>
+                                <?php if($isOverdue): ?><span class="badge bg-danger ms-1">Εκπρόθεσμο</span><?php endif ?>
                             <?php else: ?>—<?php endif ?>
                         </td>
                         <td>€<?= number_format($proj['budget'],2) ?></td>
                         <td style="min-width:100px">
                             <?php if($phaseTotal > 0): ?>
-                                <div class="progress" style="height:8px" title="<?= $phaseDone ?>/<?= $phaseTotal ?> phases">
+                                <div class="progress" style="height:8px" title="<?= $phaseDone ?>/<?= $phaseTotal ?> φάσεις">
                                     <div class="progress-bar bg-success" style="width:<?= $pct ?>%"></div>
                                 </div>
                                 <small class="text-muted"><?= $pct ?>%</small>
                             <?php else: ?>
-                                <small class="text-muted">No phases</small>
+                                <small class="text-muted">Χωρίς φάσεις</small>
                             <?php endif ?>
                         </td>
                         <td>
-                            <a href="<?= APP_URL ?>/admin/projects/<?= $proj['id'] ?>" class="btn btn-sm btn-outline-primary">View</a>
+                            <a href="<?= APP_URL ?>/admin/projects/<?= $proj['id'] ?>" class="btn btn-sm btn-outline-primary">Προβολή</a>
                         </td>
                     </tr>
                 <?php endforeach ?>
                 <?php if(empty($data)): ?>
-                    <tr><td colspan="9" class="text-center text-muted py-4">No projects found.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-4">Δεν βρέθηκαν έργα.</td></tr>
                 <?php endif ?>
                 </tbody>
             </table>

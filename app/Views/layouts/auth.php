@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($title ?? 'Login') ?> — <?= htmlspecialchars(APP_NAME) ?></title>
+    <title><?= htmlspecialchars($title ?? 'Σύνδεση') ?> — <?= htmlspecialchars(APP_NAME) ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,7 +20,7 @@
             background: #f0f4f8;
         }
 
-        /* ── Left brand panel ─────────────────────────────── */
+        /* ── Αριστερό πάνελ εταιρίας ─────────────────────────────── */
         .auth-brand {
             width: 45%;
             min-height: 100vh;
@@ -34,7 +34,6 @@
             overflow: hidden;
         }
 
-        /* decorative circles */
         .auth-brand::before {
             content: '';
             position: absolute;
@@ -126,7 +125,7 @@
             flex-shrink: 0;
         }
 
-        /* ── Right form panel ─────────────────────────────── */
+        /* ── Δεξί πάνελ φόρμας ─────────────────────────────── */
         .auth-form-wrap {
             flex: 1;
             display: flex;
@@ -159,7 +158,6 @@
             margin-bottom: 2rem;
         }
 
-        /* Floating label inputs */
         .field-wrap {
             margin-bottom: 1.25rem;
         }
@@ -221,7 +219,6 @@
             gap: .3rem;
         }
 
-        /* Eye toggle */
         .eye-toggle {
             position: absolute;
             right: 12px;
@@ -240,10 +237,8 @@
         }
         .eye-toggle:hover { color: #3b82f6; }
 
-        /* Password field has padding-right for eye button */
         .input-wrap.has-eye input { padding-right: 2.75rem; }
 
-        /* Submit button */
         .btn-signin {
             width: 100%;
             padding: .9rem;
@@ -279,7 +274,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Error alert */
         .auth-alert {
             background: #fef2f2;
             border: 1px solid #fecaca;
@@ -294,7 +288,6 @@
         }
         .auth-alert i { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
 
-        /* Divider */
         .auth-divider {
             text-align: center;
             position: relative;
@@ -318,7 +311,6 @@
             font-weight: 500;
         }
 
-        /* Responsive: stack on mobile */
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .auth-brand {
@@ -334,39 +326,37 @@
 </head>
 <body>
 
-<!-- Left: brand panel -->
+<!-- Αριστερά: πάνελ εταιρίας -->
 <div class="auth-brand">
     <div class="brand-logo">
         <div class="brand-logo-icon"><i class="bi bi-headset"></i></div>
         <div class="brand-logo-text"><?= htmlspecialchars(APP_NAME) ?></div>
     </div>
 
-    <h1 class="brand-headline">Manage your<br>sales pipeline<br>with <em>precision.</em></h1>
-    <p class="brand-sub">A complete CRM built for call center teams — track every call, deal, and commission in one place.</p>
+    <h1 class="brand-headline">Διαχειριστείτε την<br>αλυσίδα πωλήσεών σας<br>με <em>ακρίβεια.</em></h1>
+    <p class="brand-sub">Ένα πλήρες CRM για ομάδες τηλεφωνικού κέντρου — παρακολουθήστε κάθε κλήση, συμφωνία και προμήθεια σε ένα μέρος.</p>
 
     <ul class="brand-features">
         <li>
             <span class="feat-icon"><i class="bi bi-telephone-fill"></i></span>
-            Full interaction history per business
+            Πλήρες ιστορικό αλληλεπιδράσεων ανά επιχείρηση
         </li>
         <li>
             <span class="feat-icon"><i class="bi bi-graph-up-arrow"></i></span>
-            Real-time deal & revenue analytics
+            Αναλυτικά συμφωνιών & εσόδων σε πραγματικό χρόνο
         </li>
         <li>
             <span class="feat-icon"><i class="bi bi-people-fill"></i></span>
-            Multi-role: callers, developers, partners
+            Πολλαπλοί ρόλοι: τηλεφωνητές, προγραμματιστές, συνεργάτες
         </li>
         <li>
             <span class="feat-icon"><i class="bi bi-shield-check"></i></span>
-            Secure, role-based access control
+            Ασφαλής, βασισμένος σε ρόλους έλεγχος πρόσβασης
         </li>
     </ul>
-
-
 </div>
 
-<!-- Right: form panel -->
+<!-- Δεξιά: πάνελ φόρμας -->
 <div class="auth-form-wrap">
     <div class="auth-form-box">
         <?= $content ?>

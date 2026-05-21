@@ -1,10 +1,9 @@
-<!-- E:\call_center\app\Views\admin\developers\index.php -->
 <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
     <form method="GET" class="d-flex gap-2">
-        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search developers..." value="<?= htmlspecialchars($search ?? '') ?>">
-        <button class="btn btn-sm btn-outline-secondary">Search</button>
+        <input type="text" name="search" class="form-control form-control-sm" placeholder="Αναζήτηση προγραμματιστών..." value="<?= htmlspecialchars($search ?? '') ?>">
+        <button class="btn btn-sm btn-outline-secondary">Αναζήτηση</button>
     </form>
-    <a href="<?= APP_URL ?>/admin/developers/create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Developer</a>
+    <a href="<?= APP_URL ?>/admin/developers/create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Προσθήκη Προγραμματιστή</a>
 </div>
 
 <div class="card border-0 shadow-sm">
@@ -12,7 +11,7 @@
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
-                    <tr><th>Name</th><th>Email</th><th>Phone</th><th>Projects</th><th>In Progress</th><th>Completed</th><th>Earned</th><th>Status</th><th></th></tr>
+                    <tr><th>Ονοματεπώνυμο</th><th>Email</th><th>Τηλέφωνο</th><th>Έργα</th><th>Σε Εξέλιξη</th><th>Ολοκληρωμένα</th><th>Κέρδη</th><th>Κατάσταση</th><th></th></tr>
                 </thead>
                 <tbody>
                 <?php foreach ($data as $dev): ?>
@@ -27,20 +26,20 @@
                         <td class="text-success fw-semibold">€<?= number_format($st['commission_earned'] ?? 0, 2) ?></td>
                         <td>
                             <span class="badge <?= $dev['is_active'] ? 'bg-success' : 'bg-secondary' ?>">
-                                <?= $dev['is_active'] ? 'Active' : 'Inactive' ?>
+                                <?= $dev['is_active'] ? 'Ενεργός' : 'Ανενεργός' ?>
                             </span>
                         </td>
                         <td>
-                            <a href="<?= APP_URL ?>/admin/developers/<?= $dev['id'] ?>/edit" class="btn btn-sm btn-outline-primary">Edit</a>
-                            <form method="POST" action="<?= APP_URL ?>/admin/developers/<?= $dev['id'] ?>/delete" class="d-inline" onsubmit="return confirm('Delete this developer?')">
+                            <a href="<?= APP_URL ?>/admin/developers/<?= $dev['id'] ?>/edit" class="btn btn-sm btn-outline-primary">Επεξεργασία</a>
+                            <form method="POST" action="<?= APP_URL ?>/admin/developers/<?= $dev['id'] ?>/delete" class="d-inline" onsubmit="return confirm('Διαγραφή αυτού του προγραμματιστή;')">
                                 <?= \App\Core\CSRF::field() ?>
-                                <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                <button class="btn btn-sm btn-outline-danger">Διαγραφή</button>
                             </form>
                         </td>
                     </tr>
                 <?php endforeach ?>
                 <?php if(empty($data)): ?>
-                    <tr><td colspan="9" class="text-center text-muted py-4">No developers found.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-4">Δεν βρέθηκαν προγραμματιστές.</td></tr>
                 <?php endif ?>
                 </tbody>
             </table>

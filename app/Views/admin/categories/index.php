@@ -10,10 +10,10 @@ $colorMap = [
 ?>
 
 <div class="page-header">
-    <h1 class="page-title"><i class="bi bi-award me-2"></i>Productivity Categories</h1>
+    <h1 class="page-title"><i class="bi bi-award me-2"></i>Κατηγορίες Παραγωγικότητας</h1>
     <div class="page-header-actions">
         <a href="<?= APP_URL ?>/admin/categories/create" class="btn btn-primary btn-sm">
-            <i class="bi bi-plus-lg me-1"></i>New Category
+            <i class="bi bi-plus-lg me-1"></i>Νέα Κατηγορία
         </a>
     </div>
 </div>
@@ -35,7 +35,7 @@ $colorMap = [
                             <i class="bi bi-pencil"></i>
                         </a>
                         <form method="POST" action="<?= APP_URL ?>/admin/categories/<?= $cat['id'] ?>/delete"
-                              onsubmit="return confirm('Delete category «<?= htmlspecialchars($cat['name']) ?>»? Users will lose their category assignment.')">
+                              onsubmit="return confirm('Διαγραφή κατηγορίας «<?= htmlspecialchars($cat['name']) ?>»; Οι χρήστες θα χάσουν την ανάθεσή τους.')">
                             <?= CSRF::field() ?>
                             <button class="btn btn-xs btn-outline-danger"><i class="bi bi-trash"></i></button>
                         </form>
@@ -47,15 +47,15 @@ $colorMap = [
                 <?php endif ?>
                 <table class="table table-sm table-borderless mb-0" style="font-size:.82rem">
                     <tr>
-                        <td class="text-muted ps-0">Caller rate</td>
+                        <td class="text-muted ps-0">Ποσοστό Τηλεφωνητή</td>
                         <td class="fw-600 text-end pe-0"><?= number_format($cat['caller_rate'], 1) ?>%</td>
                     </tr>
                     <tr>
-                        <td class="text-muted ps-0">Developer rate</td>
+                        <td class="text-muted ps-0">Ποσοστό Προγραμματιστή</td>
                         <td class="fw-600 text-end pe-0"><?= number_format($cat['developer_rate'], 1) ?>%</td>
                     </tr>
                     <tr>
-                        <td class="text-muted ps-0">Partner rate</td>
+                        <td class="text-muted ps-0">Ποσοστό Συνεργάτη</td>
                         <td class="fw-600 text-end pe-0"><?= number_format($cat['partner_rate'], 1) ?>%</td>
                     </tr>
                 </table>
@@ -65,19 +65,19 @@ $colorMap = [
     <?php endforeach ?>
     <?php if(empty($categories)): ?>
     <div class="col-12">
-        <div class="empty-state"><i class="bi bi-award"></i><p>No categories yet. Create one to start assigning users.</p></div>
+        <div class="empty-state"><i class="bi bi-award"></i><p>Δεν υπάρχουν κατηγορίες ακόμα. Δημιουργήστε μία για να ξεκινήσετε.</p></div>
     </div>
     <?php endif ?>
 </div>
 
 <div class="card">
-    <div class="card-header fw-semibold"><i class="bi bi-info-circle me-1"></i>How categories work</div>
+    <div class="card-header fw-semibold"><i class="bi bi-info-circle me-1"></i>Πώς λειτουργούν οι κατηγορίες</div>
     <div class="card-body text-sm">
         <ul class="mb-0 ps-3" style="line-height:2">
-            <li>Assign a category to any caller, developer, or partner from their edit page.</li>
-            <li>Each category stores separate commission rates for each role type.</li>
-            <li>When a deal is approved, the user's category rate is used automatically (falls back to the global rate if no category is set).</li>
-            <li>You can create custom categories with any name (e.g. "Gold", "VIP", "Trial").</li>
+            <li>Αναθέστε κατηγορία σε οποιονδήποτε τηλεφωνητή, προγραμματιστή ή συνεργάτη από τη σελίδα επεξεργασίας του.</li>
+            <li>Κάθε κατηγορία αποθηκεύει ξεχωριστά ποσοστά προμήθειας για κάθε τύπο ρόλου.</li>
+            <li>Όταν εγκρίνεται μια συμφωνία, χρησιμοποιείται αυτόματα το ποσοστό κατηγορίας του χρήστη (εφαρμόζεται το καθολικό ποσοστό αν δεν έχει οριστεί κατηγορία).</li>
+            <li>Μπορείτε να δημιουργήσετε προσαρμοσμένες κατηγορίες με οποιοδήποτε όνομα (π.χ. "Χρυσός", "VIP", "Δοκιμαστικός").</li>
         </ul>
     </div>
 </div>

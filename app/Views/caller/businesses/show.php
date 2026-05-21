@@ -1,64 +1,66 @@
-<?php use App\Core\CSRF; ?>
+<?php use App\Core\CSRF;
+require_once __DIR__ . '/../../_partials/gr_helpers.php';
+?>
 <div class="row g-4 mt-1">
-    <!-- Business Info + Quick Actions -->
+    <!-- Στοιχεία Επιχείρησης & Γρήγορες Ενέργειες -->
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-white fw-semibold"><i class="bi bi-building me-1"></i><?= htmlspecialchars($business['company_name']) ?></div>
             <div class="card-body">
                 <table class="table table-borderless table-sm mb-0">
-                    <tr><th class="text-muted fw-normal" width="35%">Contact</th><td><?= htmlspecialchars($business['contact_name']??'—') ?></td></tr>
+                    <tr><th class="text-muted fw-normal" width="35%">Επαφή</th><td><?= htmlspecialchars($business['contact_name']??'—') ?></td></tr>
                     <tr><th class="text-muted fw-normal">Email</th><td><a href="mailto:<?= htmlspecialchars($business['email']??'') ?>"><?= htmlspecialchars($business['email']??'—') ?></a></td></tr>
-                    <tr><th class="text-muted fw-normal">Phone</th><td><?= htmlspecialchars($business['phone']??'—') ?></td></tr>
-                    <tr><th class="text-muted fw-normal">Website</th><td><?= $business['website'] ? '<a href="'.htmlspecialchars($business['website']).'" target="_blank">Visit</a>' : '—' ?></td></tr>
-                    <tr><th class="text-muted fw-normal">City</th><td><?= htmlspecialchars($business['city']??'—') ?></td></tr>
-                    <tr><th class="text-muted fw-normal">Category</th><td><?= htmlspecialchars($business['category']??'—') ?></td></tr>
-                    <tr><th class="text-muted fw-normal">Status</th><td><span class="badge bg-primary"><?= ucfirst(str_replace('_',' ',$business['status'])) ?></span></td></tr>
+                    <tr><th class="text-muted fw-normal">Τηλέφωνο</th><td><?= htmlspecialchars($business['phone']??'—') ?></td></tr>
+                    <tr><th class="text-muted fw-normal">Ιστοσελίδα</th><td><?= $business['website'] ? '<a href="'.htmlspecialchars($business['website']).'" target="_blank">Επίσκεψη</a>' : '—' ?></td></tr>
+                    <tr><th class="text-muted fw-normal">Πόλη</th><td><?= htmlspecialchars($business['city']??'—') ?></td></tr>
+                    <tr><th class="text-muted fw-normal">Κατηγορία</th><td><?= htmlspecialchars($business['category']??'—') ?></td></tr>
+                    <tr><th class="text-muted fw-normal">Κατάσταση</th><td><span class="badge bg-primary"><?= grStatus($business['status']) ?></span></td></tr>
                 </table>
             </div>
         </div>
 
-        <!-- Quick Deal Button -->
-        <a href="<?= APP_URL ?>/caller/deals/create/<?= $business['id'] ?>" class="btn btn-success w-100 mb-3"><i class="bi bi-bag-plus me-1"></i>Submit Deal</a>
+        <!-- Γρήγορη Υποβολή Συμφωνίας -->
+        <a href="<?= APP_URL ?>/caller/deals/create/<?= $business['id'] ?>" class="btn btn-success w-100 mb-3"><i class="bi bi-bag-plus me-1"></i>Υποβολή Συμφωνίας</a>
 
-        <!-- Log Interaction Form -->
+        <!-- Φόρμα Καταγραφής Αλληλεπίδρασης -->
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold"><i class="bi bi-plus-circle me-1"></i>Log Interaction</div>
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-plus-circle me-1"></i>Καταγραφή Αλληλεπίδρασης</div>
             <div class="card-body">
                 <form id="interactionForm" method="POST" action="<?= APP_URL ?>/caller/interactions" enctype="multipart/form-data">
                     <?= CSRF::field() ?>
                     <input type="hidden" name="business_id" value="<?= $business['id'] ?>">
 
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Type</label>
+                        <label class="form-label small fw-semibold">Τύπος</label>
                         <select name="type" id="intType" class="form-select form-select-sm">
-                            <?php foreach(['call'=>'Phone Call','email'=>'Email','offer'=>'Offer Sent','demo'=>'Demo/Trial','follow_up'=>'Follow-up','messenger'=>'Messenger','whatsapp'=>'WhatsApp','reminder'=>'Reminder'] as $v=>$l): ?>
+                            <?php foreach(['call'=>'Τηλεφωνική Κλήση','email'=>'Email','offer'=>'Αποστολή Προσφοράς','demo'=>'Demo/Δοκιμή','follow_up'=>'Follow-up','messenger'=>'Messenger','whatsapp'=>'WhatsApp','reminder'=>'Υπενθύμιση'] as $v=>$l): ?>
                             <option value="<?= $v ?>"><?= $l ?></option>
                             <?php endforeach ?>
                         </select>
                     </div>
 
                     <div class="mb-2" id="resultRow">
-                        <label class="form-label small fw-semibold">Result</label>
+                        <label class="form-label small fw-semibold">Αποτέλεσμα</label>
                         <select name="result" class="form-select form-select-sm">
-                            <option value="">— Select —</option>
-                            <?php foreach(['no_answer'=>'No Answer','callback'=>'Callback Requested','interested'=>'Interested','not_interested'=>'Not Interested','left_message'=>'Left Message','sent'=>'Sent','completed'=>'Completed'] as $v=>$l): ?>
+                            <option value="">— Επιλογή —</option>
+                            <?php foreach(['no_answer'=>'Δεν Απάντησε','callback'=>'Ζήτησε Επανάκληση','interested'=>'Ενδιαφέρον','not_interested'=>'Δεν Ενδιαφέρεται','left_message'=>'Άφησα Μήνυμα','sent'=>'Στάλθηκε','completed'=>'Ολοκληρώθηκε'] as $v=>$l): ?>
                             <option value="<?= $v ?>"><?= $l ?></option>
                             <?php endforeach ?>
                         </select>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Update Business Status</label>
+                        <label class="form-label small fw-semibold">Ενημέρωση Κατάστασης Επιχείρησης</label>
                         <select name="business_status" class="form-select form-select-sm">
-                            <option value="">— Keep Current —</option>
+                            <option value="">— Διατήρηση Τρέχουσας —</option>
                             <?php foreach(['new','contacted','interested','not_interested','deal_closed','follow_up'] as $s): ?>
-                            <option value="<?= $s ?>"><?= ucfirst(str_replace('_',' ',$s)) ?></option>
+                            <option value="<?= $s ?>"><?= grStatus($s) ?></option>
                             <?php endforeach ?>
                         </select>
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Services Proposed</label>
+                        <label class="form-label small fw-semibold">Προτεινόμενες Υπηρεσίες</label>
                         <div class="row g-1">
                             <?php foreach ($services as $svc): ?>
                             <div class="col-6">
@@ -72,38 +74,38 @@
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Notes</label>
+                        <label class="form-label small fw-semibold">Σημειώσεις</label>
                         <textarea name="notes" class="form-control form-control-sm" rows="2"></textarea>
                     </div>
 
                     <div class="mb-2" id="durationRow">
-                        <label class="form-label small fw-semibold">Duration (minutes)</label>
+                        <label class="form-label small fw-semibold">Διάρκεια (λεπτά)</label>
                         <input type="number" name="duration_min" class="form-control form-control-sm" min="1" max="999">
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold">Scheduled Follow-up</label>
+                        <label class="form-label small fw-semibold">Προγραμματισμένο Follow-up</label>
                         <input type="datetime-local" name="scheduled_at" class="form-control form-control-sm">
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Upload Proposal (PDF/DOC)</label>
+                        <label class="form-label small fw-semibold">Ανέβασμα Πρότασης (PDF/DOC)</label>
                         <input type="file" name="proposal_file" class="form-control form-control-sm" accept=".pdf,.doc,.docx">
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 btn-sm"><i class="bi bi-save me-1"></i>Log Interaction</button>
+                    <button type="submit" class="btn btn-primary w-100 btn-sm"><i class="bi bi-save me-1"></i>Καταγραφή Αλληλεπίδρασης</button>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Timeline -->
+    <!-- Χρονολόγιο -->
     <div class="col-lg-8">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white fw-semibold"><i class="bi bi-clock-history me-1"></i>Interaction History</div>
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-clock-history me-1"></i>Ιστορικό Αλληλεπιδράσεων</div>
             <div id="timelineContainer" class="card-body p-0">
                 <?php if(empty($interactions)): ?>
-                <div class="text-center text-muted py-5">No interactions logged yet. Use the form to log your first interaction.</div>
+                <div class="text-center text-muted py-5">Δεν έχουν καταγραφεί αλληλεπιδράσεις. Χρησιμοποιήστε τη φόρμα για να καταγράψετε την πρώτη.</div>
                 <?php else: ?>
                 <div class="timeline px-4 py-3">
                     <?php foreach ($interactions as $int): ?>
@@ -112,14 +114,14 @@
                         <div class="timeline-body ms-3">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <strong><?= ucfirst(str_replace('_',' ',$int['type'])) ?></strong>
+                                    <strong><?= grIntType($int['type']) ?></strong>
                                     <span class="text-muted small ms-2"><?= date('d M Y H:i', strtotime($int['created_at'])) ?></span>
-                                    <?php if($int['result']): ?><span class="badge bg-light text-dark border ms-1"><?= ucfirst(str_replace('_',' ',$int['result'])) ?></span><?php endif ?>
-                                    <?php if($int['duration_min']): ?><span class="badge bg-light text-dark border ms-1"><?= $int['duration_min'] ?>min</span><?php endif ?>
+                                    <?php if($int['result']): ?><span class="badge bg-light text-dark border ms-1"><?= grIntResult($int['result']) ?></span><?php endif ?>
+                                    <?php if($int['duration_min']): ?><span class="badge bg-light text-dark border ms-1"><?= $int['duration_min'] ?>λεπ.</span><?php endif ?>
                                 </div>
-                                <form method="POST" action="<?= APP_URL ?>/caller/interactions/<?= $int['id'] ?>/delete" class="d-inline" onsubmit="return confirm('Delete this interaction?')">
+                                <form method="POST" action="<?= APP_URL ?>/caller/interactions/<?= $int['id'] ?>/delete" class="d-inline" onsubmit="return confirm('Διαγραφή αυτής της αλληλεπίδρασης;')">
                                     <?= CSRF::field() ?>
-                                    <button class="btn btn-xs btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+                                    <button class="btn btn-xs btn-outline-danger" title="Διαγραφή"><i class="bi bi-trash"></i></button>
                                 </form>
                             </div>
                             <?php if($int['notes']): ?><p class="mb-1 mt-1 small text-muted"><?= nl2br(htmlspecialchars($int['notes'])) ?></p><?php endif ?>
@@ -127,10 +129,10 @@
                             <div class="mt-1"><?php foreach($int['services'] as $s): ?><span class="badge bg-secondary me-1 small"><?= htmlspecialchars($s['name']) ?></span><?php endforeach ?></div>
                             <?php endif ?>
                             <?php if($int['proposal_file']): ?>
-                            <a href="<?= APP_URL ?>/assets/uploads/proposals/<?= htmlspecialchars($int['proposal_file']) ?>" target="_blank" class="btn btn-xs btn-outline-secondary mt-1"><i class="bi bi-paperclip"></i> Proposal</a>
+                            <a href="<?= APP_URL ?>/assets/uploads/proposals/<?= htmlspecialchars($int['proposal_file']) ?>" target="_blank" class="btn btn-xs btn-outline-secondary mt-1"><i class="bi bi-paperclip"></i> Πρόταση</a>
                             <?php endif ?>
                             <?php if($int['scheduled_at']): ?>
-                            <div class="mt-1 small text-warning"><i class="bi bi-alarm me-1"></i>Reminder: <?= date('d M Y H:i', strtotime($int['scheduled_at'])) ?></div>
+                            <div class="mt-1 small text-warning"><i class="bi bi-alarm me-1"></i>Υπενθύμιση: <?= date('d M Y H:i', strtotime($int['scheduled_at'])) ?></div>
                             <?php endif ?>
                         </div>
                     </div>

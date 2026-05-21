@@ -1,54 +1,56 @@
-<?php use App\Core\CSRF; ?>
+<?php use App\Core\CSRF;
+require_once __DIR__ . '/../../_partials/gr_helpers.php';
+?>
 <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
     <div></div>
     <div class="d-flex gap-2">
-        <a href="<?= APP_URL ?>/admin/businesses/create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Add Business</a>
-        <a href="<?= APP_URL ?>/admin/import" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel me-1"></i>Import Excel</a>
-        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkModal"><i class="bi bi-people me-1"></i>Bulk Assign</button>
+        <a href="<?= APP_URL ?>/admin/businesses/create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Προσθήκη Επιχείρησης</a>
+        <a href="<?= APP_URL ?>/admin/import" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel me-1"></i>Εισαγωγή Excel</a>
+        <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkModal"><i class="bi bi-people me-1"></i>Μαζική Ανάθεση</button>
     </div>
 </div>
 
-<!-- Filters -->
+<!-- Φίλτρα -->
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search..." value="<?= htmlspecialchars($filters['search']) ?>">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="Αναζήτηση..." value="<?= htmlspecialchars($filters['search']) ?>">
             </div>
             <div class="col-md-2">
                 <select name="city" class="form-select form-select-sm">
-                    <option value="">All Cities</option>
+                    <option value="">Όλες οι Πόλεις</option>
                     <?php foreach ($cities as $c): ?><option value="<?= htmlspecialchars($c) ?>" <?= $filters['city']===$c?'selected':'' ?>><?= htmlspecialchars($c) ?></option><?php endforeach ?>
                 </select>
             </div>
             <div class="col-md-2">
                 <select name="category" class="form-select form-select-sm">
-                    <option value="">All Categories</option>
+                    <option value="">Όλες οι Κατηγορίες</option>
                     <?php foreach ($cats as $c): ?><option value="<?= htmlspecialchars($c) ?>" <?= $filters['category']===$c?'selected':'' ?>><?= htmlspecialchars($c) ?></option><?php endforeach ?>
                 </select>
             </div>
             <div class="col-md-2">
                 <select name="status" class="form-select form-select-sm">
-                    <option value="">All Statuses</option>
+                    <option value="">Όλες οι Καταστάσεις</option>
                     <?php foreach (['new','contacted','interested','not_interested','deal_closed','follow_up'] as $s): ?>
-                    <option value="<?= $s ?>" <?= $filters['status']===$s?'selected':'' ?>><?= ucfirst(str_replace('_',' ',$s)) ?></option>
+                    <option value="<?= $s ?>" <?= $filters['status']===$s?'selected':'' ?>><?= grStatus($s) ?></option>
                     <?php endforeach ?>
                 </select>
             </div>
             <div class="col-md-2">
                 <select name="caller_id" class="form-select form-select-sm">
-                    <option value="">All Callers</option>
+                    <option value="">Όλοι οι Τηλεφωνητές</option>
                     <?php foreach ($callers as $c): ?><option value="<?= $c['id'] ?>" <?= $filters['caller_id']==$c['id']?'selected':'' ?>><?= htmlspecialchars($c['name']) ?></option><?php endforeach ?>
                 </select>
             </div>
             <div class="col-md-1">
-                <button class="btn btn-primary btn-sm w-100">Filter</button>
+                <button class="btn btn-primary btn-sm w-100">Φίλτρο</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Table -->
+<!-- Πίνακας -->
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
         <form id="bulkForm">
@@ -56,7 +58,7 @@
             <thead class="table-light">
                 <tr>
                     <th><input type="checkbox" id="checkAll" class="form-check-input"></th>
-                    <th>Company</th><th>Contact</th><th>City</th><th>Category</th><th>Status</th><th>Assigned To</th><th>Actions</th>
+                    <th>Εταιρία</th><th>Επαφή</th><th>Πόλη</th><th>Κατηγορία</th><th>Κατάσταση</th><th>Ανατεθημένο Σε</th><th>Ενέργειες</th>
                 </tr>
             </thead>
             <tbody>
@@ -75,18 +77,18 @@
                 </td>
                 <td><?= htmlspecialchars($b['city'] ?? '') ?></td>
                 <td><?= htmlspecialchars($b['category'] ?? '') ?></td>
-                <td><span class="badge <?= statusBadge($b['status']) ?>"><?= ucfirst(str_replace('_',' ',$b['status'])) ?></span></td>
-                <td><?= $b['assigned_caller'] ? htmlspecialchars($b['assigned_caller']) : '<em class="text-muted">Unassigned</em>' ?></td>
+                <td><span class="badge <?= statusBadge($b['status']) ?>"><?= grStatus($b['status']) ?></span></td>
+                <td><?= $b['assigned_caller'] ? htmlspecialchars($b['assigned_caller']) : '<em class="text-muted">Μη ανατεθημένο</em>' ?></td>
                 <td>
                     <a href="<?= APP_URL ?>/admin/businesses/<?= $b['id'] ?>/edit" class="btn btn-xs btn-outline-primary"><i class="bi bi-pencil"></i></a>
-                    <form method="POST" action="<?= APP_URL ?>/admin/businesses/<?= $b['id'] ?>/delete" class="d-inline" onsubmit="return confirm('Delete this business?')">
+                    <form method="POST" action="<?= APP_URL ?>/admin/businesses/<?= $b['id'] ?>/delete" class="d-inline" onsubmit="return confirm('Διαγραφή αυτής της επιχείρησης;')">
                         <?= CSRF::field() ?>
                         <button class="btn btn-xs btn-outline-danger"><i class="bi bi-trash"></i></button>
                     </form>
                 </td>
             </tr>
             <?php endforeach ?>
-            <?php if(empty($data)): ?><tr><td colspan="8" class="text-center py-4 text-muted">No businesses found.</td></tr><?php endif ?>
+            <?php if(empty($data)): ?><tr><td colspan="8" class="text-center py-4 text-muted">Δεν βρέθηκαν επιχειρήσεις.</td></tr><?php endif ?>
             </tbody>
         </table>
         </form>
@@ -98,37 +100,37 @@
     <?php endif ?>
 </div>
 
-<!-- Bulk Assign Modal -->
+<!-- Μαζική Ανάθεση Modal -->
 <div class="modal fade" id="bulkModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" action="<?= APP_URL ?>/admin/businesses/bulk-assign">
                 <?= CSRF::field() ?>
-                <div class="modal-header"><h5 class="modal-title">Bulk Assign Businesses</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-header"><h5 class="modal-title">Μαζική Ανάθεση Επιχειρήσεων</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <div id="selectedIds"></div>
                     <div class="mb-3">
-                        <label class="form-label">Assign To</label>
+                        <label class="form-label">Ανάθεση Σε</label>
                         <select name="caller_id" class="form-select" required>
-                            <option value="">Select Caller</option>
+                            <option value="">Επιλογή Τηλεφωνητή</option>
                             <?php foreach ($callers as $c): ?><option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option><?php endforeach ?>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Assignment Mode</label>
+                        <label class="form-label">Τρόπος Ανάθεσης</label>
                         <select name="assign_mode" class="form-select" id="assignMode">
-                            <option value="manual">Selected businesses only</option>
-                            <option value="random">Random (unassigned)</option>
+                            <option value="manual">Μόνο επιλεγμένες επιχειρήσεις</option>
+                            <option value="random">Τυχαία (μη ανατεθημένες)</option>
                         </select>
                     </div>
                     <div id="randomQtyDiv" class="d-none mb-3">
-                        <label class="form-label">Number of businesses to assign randomly</label>
+                        <label class="form-label">Αριθμός επιχειρήσεων για τυχαία ανάθεση</label>
                         <input type="number" name="random_qty" class="form-control" value="10" min="1" max="500">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Assign</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ακύρωση</button>
+                    <button type="submit" class="btn btn-primary">Ανάθεση</button>
                 </div>
             </form>
         </div>

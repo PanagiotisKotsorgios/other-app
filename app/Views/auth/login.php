@@ -5,8 +5,8 @@ $errors = Session::getFlash('errors', []);
 $error  = Session::getFlash('error');
 ?>
 
-<h2>Welcome back</h2>
-<p class="auth-sub">Sign in to your account to continue.</p>
+<h2>Καλώς ήρθατε</h2>
+<p class="auth-sub">Συνδεθείτε στον λογαριασμό σας για να συνεχίσετε.</p>
 
 <?php if ($error): ?>
 <div class="auth-alert">
@@ -20,7 +20,7 @@ $error  = Session::getFlash('error');
 
     <!-- Email -->
     <div class="field-wrap">
-        <label class="field-label" for="email">Email address</label>
+        <label class="field-label" for="email">Διεύθυνση Email</label>
         <div class="input-wrap">
             <input
                 type="email"
@@ -40,9 +40,9 @@ $error  = Session::getFlash('error');
         <?php endif ?>
     </div>
 
-    <!-- Password -->
+    <!-- Κωδικός -->
     <div class="field-wrap">
-        <label class="field-label" for="password">Password</label>
+        <label class="field-label" for="password">Κωδικός</label>
         <div class="input-wrap has-eye">
             <input
                 type="password"
@@ -54,7 +54,7 @@ $error  = Session::getFlash('error');
                 autocomplete="current-password"
             >
             <i class="bi bi-lock field-icon"></i>
-            <button type="button" class="eye-toggle" id="eyeBtn" aria-label="Toggle password visibility" tabindex="-1">
+            <button type="button" class="eye-toggle" id="eyeBtn" aria-label="Εναλλαγή ορατότητας κωδικού" tabindex="-1">
                 <i class="bi bi-eye" id="eyeIcon"></i>
             </button>
         </div>
@@ -66,13 +66,12 @@ $error  = Session::getFlash('error');
     <button type="submit" class="btn-signin" id="submitBtn">
         <span class="spinner" id="spinner"></span>
         <i class="bi bi-box-arrow-in-right" id="submitIcon"></i>
-        <span id="submitText">Sign In</span>
+        <span id="submitText">Σύνδεση</span>
     </button>
 </form>
 
 <script>
 (function () {
-    // Eye toggle
     const pwInput  = document.getElementById('password');
     const eyeBtn   = document.getElementById('eyeBtn');
     const eyeIcon  = document.getElementById('eyeIcon');
@@ -84,7 +83,6 @@ $error  = Session::getFlash('error');
         pwInput.focus();
     });
 
-    // Loading state on submit
     const form       = document.getElementById('loginForm');
     const spinner    = document.getElementById('spinner');
     const submitIcon = document.getElementById('submitIcon');
@@ -95,7 +93,7 @@ $error  = Session::getFlash('error');
         submitBtn.disabled  = true;
         spinner.style.display    = 'block';
         submitIcon.style.display = 'none';
-        submitText.textContent   = 'Signing in…';
+        submitText.textContent   = 'Σύνδεση…';
     });
 })();
 </script>

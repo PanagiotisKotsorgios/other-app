@@ -1,9 +1,9 @@
 <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
     <ul class="nav nav-pills">
-        <li class="nav-item"><a href="<?= APP_URL ?>/<?= $prefix ?>/messages" class="nav-link <?= ($tab??'inbox')==='inbox'?'active':'' ?>"><i class="bi bi-inbox me-1"></i>Inbox</a></li>
-        <li class="nav-item"><a href="<?= APP_URL ?>/<?= $prefix ?>/messages/sent" class="nav-link <?= ($tab??'')==='sent'?'active':'' ?>"><i class="bi bi-send me-1"></i>Sent</a></li>
+        <li class="nav-item"><a href="<?= APP_URL ?>/<?= $prefix ?>/messages" class="nav-link <?= ($tab??'inbox')==='inbox'?'active':'' ?>"><i class="bi bi-inbox me-1"></i>Εισερχόμενα</a></li>
+        <li class="nav-item"><a href="<?= APP_URL ?>/<?= $prefix ?>/messages/sent" class="nav-link <?= ($tab??'')==='sent'?'active':'' ?>"><i class="bi bi-send me-1"></i>Απεσταλμένα</a></li>
     </ul>
-    <a href="<?= APP_URL ?>/<?= $prefix ?>/messages/compose" class="btn btn-primary btn-sm"><i class="bi bi-pencil-square me-1"></i>New Message</a>
+    <a href="<?= APP_URL ?>/<?= $prefix ?>/messages/compose" class="btn btn-primary btn-sm"><i class="bi bi-pencil-square me-1"></i>Νέο Μήνυμα</a>
 </div>
 
 <div class="card border-0 shadow-sm">
@@ -12,9 +12,9 @@
             <thead class="table-light">
                 <tr>
                     <th></th>
-                    <th><?= ($tab??'inbox')==='inbox' ? 'From' : 'To' ?></th>
-                    <th>Subject</th>
-                    <th>Date</th>
+                    <th><?= ($tab??'inbox')==='inbox' ? 'Από' : 'Προς' ?></th>
+                    <th>Θέμα</th>
+                    <th>Ημερομηνία</th>
                 </tr>
             </thead>
             <tbody>
@@ -30,7 +30,7 @@
                 <td class="text-muted small"><?= date('d M Y H:i', strtotime($m['created_at'])) ?></td>
             </tr>
             <?php endforeach ?>
-            <?php if(empty($data)): ?><tr><td colspan="4" class="text-center py-4 text-muted">No messages.</td></tr><?php endif ?>
+            <?php if(empty($data)): ?><tr><td colspan="4" class="text-center py-4 text-muted">Δεν υπάρχουν μηνύματα.</td></tr><?php endif ?>
             </tbody>
         </table>
     </div>

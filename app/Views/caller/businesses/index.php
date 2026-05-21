@@ -1,29 +1,30 @@
+<?php require_once __DIR__ . '/../../_partials/gr_helpers.php'; ?>
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-4"><input type="text" name="search" class="form-control form-control-sm" placeholder="Search..." value="<?= htmlspecialchars($filters['search']) ?>"></div>
+            <div class="col-md-4"><input type="text" name="search" class="form-control form-control-sm" placeholder="Αναζήτηση..." value="<?= htmlspecialchars($filters['search']) ?>"></div>
             <div class="col-md-3">
                 <select name="status" class="form-select form-select-sm">
-                    <option value="">All Statuses</option>
+                    <option value="">Όλες οι Καταστάσεις</option>
                     <?php foreach(['new','contacted','interested','not_interested','deal_closed','follow_up'] as $s): ?>
-                    <option value="<?= $s ?>" <?= $filters['status']===$s?'selected':'' ?>><?= ucfirst(str_replace('_',' ',$s)) ?></option>
+                    <option value="<?= $s ?>" <?= $filters['status']===$s?'selected':'' ?>><?= grStatus($s) ?></option>
                     <?php endforeach ?>
                 </select>
             </div>
-            <div class="col-auto"><button class="btn btn-primary btn-sm">Filter</button></div>
+            <div class="col-auto"><button class="btn btn-primary btn-sm">Φίλτρο</button></div>
         </form>
     </div>
 </div>
 
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">Assigned Businesses</span>
-        <span class="badge bg-primary"><?= $total ?> total</span>
+        <span class="fw-semibold">Ανατεθειμένες Επιχειρήσεις</span>
+        <span class="badge bg-primary"><?= $total ?> σύνολο</span>
     </div>
     <div class="card-body p-0">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
-                <tr><th>Company</th><th>Contact</th><th>Phone</th><th>City</th><th>Category</th><th>Status</th><th>Actions</th></tr>
+                <tr><th>Εταιρία</th><th>Επαφή</th><th>Τηλέφωνο</th><th>Πόλη</th><th>Κατηγορία</th><th>Κατάσταση</th><th>Ενέργειες</th></tr>
             </thead>
             <tbody>
             <?php foreach ($data as $b): ?>
@@ -39,14 +40,14 @@
                 <td><?= htmlspecialchars($b['phone']??'—') ?></td>
                 <td><?= htmlspecialchars($b['city']??'—') ?></td>
                 <td><?= htmlspecialchars($b['category']??'—') ?></td>
-                <td><span class="badge bg-secondary"><?= ucfirst(str_replace('_',' ',$b['status'])) ?></span></td>
+                <td><span class="badge bg-secondary"><?= grStatus($b['status']) ?></span></td>
                 <td>
                     <a href="<?= APP_URL ?>/caller/businesses/<?= $b['id'] ?>" class="btn btn-xs btn-primary"><i class="bi bi-eye"></i></a>
-                    <a href="<?= APP_URL ?>/caller/deals/create/<?= $b['id'] ?>" class="btn btn-xs btn-success" title="Submit Deal"><i class="bi bi-bag-plus"></i></a>
+                    <a href="<?= APP_URL ?>/caller/deals/create/<?= $b['id'] ?>" class="btn btn-xs btn-success" title="Υποβολή Συμφωνίας"><i class="bi bi-bag-plus"></i></a>
                 </td>
             </tr>
             <?php endforeach ?>
-            <?php if(empty($data)): ?><tr><td colspan="7" class="text-center py-4 text-muted">No businesses assigned to you.</td></tr><?php endif ?>
+            <?php if(empty($data)): ?><tr><td colspan="7" class="text-center py-4 text-muted">Δεν υπάρχουν ανατεθειμένες επιχειρήσεις.</td></tr><?php endif ?>
             </tbody>
         </table>
     </div>
