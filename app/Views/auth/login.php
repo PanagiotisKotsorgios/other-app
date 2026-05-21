@@ -21,39 +21,43 @@ $error  = Session::getFlash('error');
     <!-- Email -->
     <div class="field-wrap">
         <label class="field-label" for="email">Email address</label>
-        <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder=" "
-            value="<?= htmlspecialchars($old['email'] ?? '') ?>"
-            class="<?= isset($errors['email']) ? 'is-invalid' : '' ?>"
-            required
-            autofocus
-            autocomplete="email"
-        >
-        <i class="bi bi-envelope field-icon"></i>
+        <div class="input-wrap">
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder=" "
+                value="<?= htmlspecialchars($old['email'] ?? '') ?>"
+                class="<?= isset($errors['email']) ? 'is-invalid' : '' ?>"
+                required
+                autofocus
+                autocomplete="email"
+            >
+            <i class="bi bi-envelope field-icon"></i>
+        </div>
         <?php if (isset($errors['email'])): ?>
             <div class="invalid-msg"><i class="bi bi-exclamation-circle"></i><?= htmlspecialchars($errors['email']) ?></div>
         <?php endif ?>
     </div>
 
     <!-- Password -->
-    <div class="field-wrap has-eye">
+    <div class="field-wrap">
         <label class="field-label" for="password">Password</label>
-        <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder=" "
-            class="<?= isset($errors['password']) ? 'is-invalid' : '' ?>"
-            required
-            autocomplete="current-password"
-        >
-        <i class="bi bi-lock field-icon"></i>
-        <button type="button" class="eye-toggle" id="eyeBtn" aria-label="Toggle password visibility" tabindex="-1">
-            <i class="bi bi-eye" id="eyeIcon"></i>
-        </button>
+        <div class="input-wrap has-eye">
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder=" "
+                class="<?= isset($errors['password']) ? 'is-invalid' : '' ?>"
+                required
+                autocomplete="current-password"
+            >
+            <i class="bi bi-lock field-icon"></i>
+            <button type="button" class="eye-toggle" id="eyeBtn" aria-label="Toggle password visibility" tabindex="-1">
+                <i class="bi bi-eye" id="eyeIcon"></i>
+            </button>
+        </div>
         <?php if (isset($errors['password'])): ?>
             <div class="invalid-msg"><i class="bi bi-exclamation-circle"></i><?= htmlspecialchars($errors['password']) ?></div>
         <?php endif ?>

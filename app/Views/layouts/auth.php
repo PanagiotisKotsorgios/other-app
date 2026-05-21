@@ -126,15 +126,6 @@
             flex-shrink: 0;
         }
 
-        .brand-footer {
-            margin-top: auto;
-            padding-top: 3rem;
-            font-size: .75rem;
-            color: #475569;
-            position: relative;
-            z-index: 1;
-        }
-
         /* ── Right form panel ─────────────────────────────── */
         .auth-form-wrap {
             flex: 1;
@@ -170,10 +161,12 @@
 
         /* Floating label inputs */
         .field-wrap {
-            position: relative;
             margin-bottom: 1.25rem;
         }
-        .field-wrap .field-icon {
+        .input-wrap {
+            position: relative;
+        }
+        .input-wrap .field-icon {
             position: absolute;
             left: 14px;
             top: 50%;
@@ -200,8 +193,8 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59,130,246,.12);
         }
-        .field-wrap input:focus ~ .field-icon,
-        .field-wrap input:not(:placeholder-shown) ~ .field-icon {
+        .input-wrap input:focus ~ .field-icon,
+        .input-wrap input:not(:placeholder-shown) ~ .field-icon {
             color: #3b82f6;
         }
         .field-wrap input.is-invalid {
@@ -248,7 +241,7 @@
         .eye-toggle:hover { color: #3b82f6; }
 
         /* Password field has padding-right for eye button */
-        .field-wrap.has-eye input { padding-right: 2.75rem; }
+        .input-wrap.has-eye input { padding-right: 2.75rem; }
 
         /* Submit button */
         .btn-signin {
@@ -335,7 +328,6 @@
             }
             .brand-headline { font-size: 1.6rem; }
             .brand-features { display: none; }
-            .brand-footer { display: none; }
             .auth-form-wrap { padding: 2rem 1.25rem; }
         }
     </style>
@@ -371,7 +363,7 @@
         </li>
     </ul>
 
-    <div class="brand-footer">© <?= date('Y') ?> <?= htmlspecialchars(APP_NAME) ?>. All rights reserved.</div>
+
 </div>
 
 <!-- Right: form panel -->
