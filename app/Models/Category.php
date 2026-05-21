@@ -8,9 +8,9 @@ class Category extends Model
 {
     protected string $table = 'user_categories';
 
-    public function all(): array
+    public function all(string $orderBy = 'sort_order', string $dir = 'ASC'): array
     {
-        $stmt = $this->db->query("SELECT * FROM user_categories ORDER BY sort_order, name");
+        $stmt = $this->db->query("SELECT * FROM user_categories ORDER BY sort_order ASC, name ASC");
         return $stmt->fetchAll();
     }
 
