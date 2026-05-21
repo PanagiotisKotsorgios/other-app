@@ -77,3 +77,13 @@ document.querySelectorAll('table.datatable').forEach(function (table) {
 
     setInterval(fetchCount, 60000);
 }());
+
+/* ─── Auto-wrap bare tables in table-responsive ─────────── */
+document.querySelectorAll('.card-body > table.table, .card-body > .table-responsive-card > table.table').forEach(function (table) {
+    if (!table.closest('.table-responsive')) {
+        var wrapper = document.createElement('div');
+        wrapper.className = 'table-responsive';
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+    }
+});
