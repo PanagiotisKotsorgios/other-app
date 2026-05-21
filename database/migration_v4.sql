@@ -2,8 +2,10 @@
 -- Call Center CRM — Migration V4
 -- Updates: category labels/descriptions to Greek
 -- ADDITIVE ONLY — no DROP TABLE, zero data loss
+-- Run with: mysql --default-character-set=utf8mb4 ...
 -- ============================================================
 
+SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Update category labels and descriptions to Greek (idempotent)
