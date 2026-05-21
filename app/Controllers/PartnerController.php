@@ -72,7 +72,7 @@ class PartnerController extends Controller
                 'phone'        => trim($_POST['phone'] ?? ''),
                 'email'        => trim($_POST['email'] ?? ''),
                 'city'         => trim($_POST['city'] ?? ''),
-                'status'       => 'pending',
+                'status'       => 'new',
             ];
             $errors = $this->validate($bizData, ['company_name' => 'required|max:255']);
             if ($errors) {

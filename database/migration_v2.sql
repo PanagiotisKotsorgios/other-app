@@ -67,17 +67,19 @@ SET @sql = IF(@col = 0,
   'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Drop old unique key on deal_id and replace with (deal_id, role_type)
-SET @uk = (SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
-  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'commissions' AND CONSTRAINT_NAME = 'uq_deal');
-SET @sql = IF(@uk > 0, 'ALTER TABLE commissions DROP INDEX uq_deal', 'SELECT 1');
-PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
-
+-- Replace uq_deal with composite uq_deal_role (deal_id, role_type).
+-- IMPORTANT: add the new composite key FIRST so MySQL still has an index
+-- covering deal_id for the fk_com_deal constraint, then drop the old one.
 SET @uk = (SELECT COUNT(*) FROM information_schema.STATISTICS
   WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'commissions' AND INDEX_NAME = 'uq_deal_role');
 SET @sql = IF(@uk = 0,
   'ALTER TABLE commissions ADD UNIQUE KEY uq_deal_role (deal_id, role_type)',
   'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @uk = (SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'commissions' AND CONSTRAINT_NAME = 'uq_deal');
+SET @sql = IF(@uk > 0, 'ALTER TABLE commissions DROP INDEX uq_deal', 'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- ── 4. projects ───────────────────────────────────────────────
