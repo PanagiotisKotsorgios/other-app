@@ -4,7 +4,7 @@
 namespace App\Controllers;
 
 use App\Core\{Controller, Auth, CSRF, Session};
-use App\Models\{User, Business, Deal, Commission, Interaction, Message, Project, Expense};
+use App\Models\{User, Business, Deal, Commission, Interaction, Message, Project, Expense, Category, UserNote};
 
 class AdminController extends Controller
 {
@@ -109,8 +109,16 @@ class AdminController extends Controller
         $model  = new User();
         $caller = $model->find((int)$id);
         if (!$caller) { $this->redirect(APP_URL . '/admin/callers'); return; }
-        $unread = (new Message())->unreadCount(Auth::id());
-        $this->view('admin.callers.edit', ['title' => 'Edit Caller', 'caller' => $caller, 'unread' => $unread]);
+        $unread     = (new Message())->unreadCount(Auth::id());
+        $categories = (new Category())->all();
+        $notes      = (new UserNote())->forUser((int)$id);
+        $this->view('admin.callers.edit', [
+            'title'      => 'Edit Caller',
+            'caller'     => $caller,
+            'categories' => $categories,
+            'notes'      => $notes,
+            'unread'     => $unread,
+        ]);
     }
 
     public function callerUpdate(string $id): void
@@ -119,10 +127,11 @@ class AdminController extends Controller
         CSRF::check();
 
         $data   = [
-            'name'      => trim($_POST['name'] ?? ''),
-            'email'     => trim($_POST['email'] ?? ''),
-            'phone'     => trim($_POST['phone'] ?? ''),
-            'is_active' => (int)($_POST['is_active'] ?? 1),
+            'name'        => trim($_POST['name'] ?? ''),
+            'email'       => trim($_POST['email'] ?? ''),
+            'phone'       => trim($_POST['phone'] ?? ''),
+            'is_active'   => (int)($_POST['is_active'] ?? 1),
+            'category_id' => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
         ];
         $errors = $this->validate($data, ['name' => 'required', 'email' => 'required|email']);
 
@@ -140,7 +149,7 @@ class AdminController extends Controller
         }
 
         Session::flash('success', 'Caller updated.');
-        $this->redirect(APP_URL . '/admin/callers');
+        $this->redirect(APP_URL . '/admin/callers/' . $id . '/edit');
     }
 
     public function callerDelete(string $id): void
@@ -238,13 +247,17 @@ class AdminController extends Controller
         $model     = new User();
         $developer = $model->find((int)$id);
         if (!$developer) { $this->redirect(APP_URL . '/admin/developers'); return; }
-        $roles  = $model->getRoles((int)$id);
-        $unread = (new Message())->unreadCount(Auth::id());
+        $roles      = $model->getRoles((int)$id);
+        $unread     = (new Message())->unreadCount(Auth::id());
+        $categories = (new Category())->all();
+        $notes      = (new UserNote())->forUser((int)$id);
         $this->view('admin.developers.edit', [
-            'title'     => 'Edit Developer',
-            'developer' => $developer,
-            'roles'     => $roles,
-            'unread'    => $unread,
+            'title'      => 'Edit Developer',
+            'developer'  => $developer,
+            'roles'      => $roles,
+            'categories' => $categories,
+            'notes'      => $notes,
+            'unread'     => $unread,
         ]);
     }
 
@@ -254,10 +267,11 @@ class AdminController extends Controller
         CSRF::check();
 
         $data   = [
-            'name'      => trim($_POST['name'] ?? ''),
-            'email'     => trim($_POST['email'] ?? ''),
-            'phone'     => trim($_POST['phone'] ?? ''),
-            'is_active' => (int)($_POST['is_active'] ?? 1),
+            'name'        => trim($_POST['name'] ?? ''),
+            'email'       => trim($_POST['email'] ?? ''),
+            'phone'       => trim($_POST['phone'] ?? ''),
+            'is_active'   => (int)($_POST['is_active'] ?? 1),
+            'category_id' => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
         ];
         $errors = $this->validate($data, ['name' => 'required', 'email' => 'required|email']);
 
@@ -274,12 +288,11 @@ class AdminController extends Controller
             $model->updatePassword((int)$id, $_POST['password']);
         }
 
-        // Sync roles
         $roles = $_POST['roles'] ?? ['developer'];
         $model->syncRoles((int)$id, $roles);
 
         Session::flash('success', 'Developer updated.');
-        $this->redirect(APP_URL . '/admin/developers');
+        $this->redirect(APP_URL . '/admin/developers/' . $id . '/edit');
     }
 
     public function developerDelete(string $id): void
@@ -364,13 +377,17 @@ class AdminController extends Controller
         $model   = new User();
         $partner = $model->find((int)$id);
         if (!$partner) { $this->redirect(APP_URL . '/admin/partners'); return; }
-        $roles  = $model->getRoles((int)$id);
-        $unread = (new Message())->unreadCount(Auth::id());
+        $roles      = $model->getRoles((int)$id);
+        $unread     = (new Message())->unreadCount(Auth::id());
+        $categories = (new Category())->all();
+        $notes      = (new UserNote())->forUser((int)$id);
         $this->view('admin.partners.edit', [
-            'title'   => 'Edit Partner',
-            'partner' => $partner,
-            'roles'   => $roles,
-            'unread'  => $unread,
+            'title'      => 'Edit Partner',
+            'partner'    => $partner,
+            'roles'      => $roles,
+            'categories' => $categories,
+            'notes'      => $notes,
+            'unread'     => $unread,
         ]);
     }
 
@@ -380,10 +397,11 @@ class AdminController extends Controller
         CSRF::check();
 
         $data   = [
-            'name'      => trim($_POST['name'] ?? ''),
-            'email'     => trim($_POST['email'] ?? ''),
-            'phone'     => trim($_POST['phone'] ?? ''),
-            'is_active' => (int)($_POST['is_active'] ?? 1),
+            'name'        => trim($_POST['name'] ?? ''),
+            'email'       => trim($_POST['email'] ?? ''),
+            'phone'       => trim($_POST['phone'] ?? ''),
+            'is_active'   => (int)($_POST['is_active'] ?? 1),
+            'category_id' => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
         ];
         $errors = $this->validate($data, ['name' => 'required', 'email' => 'required|email']);
 
@@ -404,7 +422,7 @@ class AdminController extends Controller
         $model->syncRoles((int)$id, $roles);
 
         Session::flash('success', 'Partner updated.');
-        $this->redirect(APP_URL . '/admin/partners');
+        $this->redirect(APP_URL . '/admin/partners/' . $id . '/edit');
     }
 
     public function partnerDelete(string $id): void
@@ -437,5 +455,34 @@ class AdminController extends Controller
         $model->syncRoles((int)$userId, array_values($roles));
         Session::flash('success', 'Roles updated for ' . $user['name'] . '.');
         $this->back();
+    }
+
+    // ── User Notes ─────────────────────────────────────────────────
+    public function addUserNote(string $userId): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+
+        $body     = trim($_POST['body'] ?? '');
+        $isPinned = !empty($_POST['is_pinned']);
+
+        if ($body !== '') {
+            (new UserNote())->add((int)$userId, Auth::id(), $body, $isPinned);
+            Session::flash('success', 'Note added.');
+        }
+        $this->redirect($_SERVER['HTTP_REFERER'] ?? APP_URL . '/admin/callers');
+    }
+
+    public function deleteUserNote(string $noteId): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+        $model = new UserNote();
+        $note  = $model->find((int)$noteId);
+        if ($note) {
+            $model->delete((int)$noteId);
+            Session::flash('success', 'Note deleted.');
+        }
+        $this->redirect($_SERVER['HTTP_REFERER'] ?? APP_URL . '/admin/callers');
     }
 }

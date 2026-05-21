@@ -121,34 +121,38 @@ class Deal extends Model
         if ($ok) {
             $deal            = $this->find($id);
             $commissionModel = new Commission();
+            $catModel        = new Category();
 
-            // Caller commission (10%)
+            // Caller commission — use category rate if assigned, else global
+            $callerRate = $catModel->rateForUser($deal['caller_id'], 'caller') ?: COMMISSION_RATE;
             $commissionModel->createForRole(
                 $id,
                 $deal['caller_id'],
-                $deal['amount'] * COMMISSION_RATE / 100,
-                COMMISSION_RATE,
+                $deal['amount'] * $callerRate / 100,
+                $callerRate,
                 'caller'
             );
 
-            // Developer commission (20%) if assigned
+            // Developer commission if assigned
             if (!empty($deal['developer_id'])) {
+                $devRate = $catModel->rateForUser($deal['developer_id'], 'developer') ?: DEVELOPER_COMMISSION_RATE;
                 $commissionModel->createForRole(
                     $id,
                     $deal['developer_id'],
-                    $deal['amount'] * DEVELOPER_COMMISSION_RATE / 100,
-                    DEVELOPER_COMMISSION_RATE,
+                    $deal['amount'] * $devRate / 100,
+                    $devRate,
                     'developer'
                 );
             }
 
-            // Partner commission (20%) if assigned
+            // Partner commission if assigned
             if (!empty($deal['partner_id'])) {
+                $partnerRate = $catModel->rateForUser($deal['partner_id'], 'partner') ?: PARTNER_COMMISSION_RATE;
                 $commissionModel->createForRole(
                     $id,
                     $deal['partner_id'],
-                    $deal['amount'] * PARTNER_COMMISSION_RATE / 100,
-                    PARTNER_COMMISSION_RATE,
+                    $deal['amount'] * $partnerRate / 100,
+                    $partnerRate,
                     'partner'
                 );
             }

@@ -1,7 +1,8 @@
-<!-- E:\call_center\app\Views\admin\projects\show.php -->
 <?php
 use App\Core\CSRF;
 $isOverdue = $project['deadline'] && $project['deadline'] < date('Y-m-d') && !in_array($project['status'], ['completed','on_hold']);
+$colorMap = ['green'=>'#166534','blue'=>'#1d4ed8','orange'=>'#c2410c','red'=>'#b91c1c','purple'=>'#7e22ce','teal'=>'#0f766e'];
+$bgMap    = ['green'=>'#dcfce7','blue'=>'#dbeafe','orange'=>'#fff7ed','red'=>'#fee2e2','purple'=>'#f3e8ff','teal'=>'#ccfbf1'];
 $statusColors = ['awaiting_assignment'=>'secondary','in_progress'=>'primary','testing'=>'info','on_hold'=>'warning','completed'=>'success'];
 $phaseDone = count(array_filter($phases, fn($p) => $p['status']==='completed'));
 $phaseTotal = count($phases);
@@ -166,7 +167,7 @@ $dealAmnt    = (float)($project['deal_amount'] ?? 0);
     <div class="col-lg-4">
         <!-- Assign Developer -->
         <div class="card border-0 shadow-sm mb-3">
-            <div class="card-header bg-white fw-semibold"><i class="bi bi-person-badge me-1"></i> Assign Developer</div>
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-person-badge me-1"></i> Lead Developer</div>
             <div class="card-body">
                 <form method="POST" action="<?= APP_URL ?>/admin/projects/<?= $project['id'] ?>/assign-developer">
                     <?= CSRF::field() ?>
@@ -178,6 +179,91 @@ $dealAmnt    = (float)($project['deal_amount'] ?? 0);
                     </select>
                     <button class="btn btn-sm btn-primary w-100"><i class="bi bi-person-check me-1"></i>Assign</button>
                 </form>
+            </div>
+        </div>
+
+        <!-- Team Assignments -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white fw-semibold d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-people me-1"></i> Team Assignments</span>
+                <button class="btn btn-xs btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#addAssignmentForm">
+                    <i class="bi bi-plus-lg"></i>
+                </button>
+            </div>
+            <div class="collapse" id="addAssignmentForm">
+                <form method="POST" action="<?= APP_URL ?>/admin/projects/<?= $project['id'] ?>/assign-user"
+                      class="p-3 border-bottom">
+                    <?= CSRF::field() ?>
+                    <div class="mb-2">
+                        <label class="form-label text-xs fw-600">User</label>
+                        <select name="user_id" class="form-select form-select-sm" required>
+                            <option value="">— Select user —</option>
+                            <?php
+                            $assignedIds = array_column($assignments ?? [], 'user_id');
+                            foreach ($allUsers as $u):
+                                if (in_array($u['id'], $assignedIds)) continue;
+                            ?>
+                            <option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['name']) ?> (<?= ucfirst($u['role']) ?>)</option>
+                            <?php endforeach ?>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label text-xs fw-600">Role on Project</label>
+                        <select name="role_type" class="form-select form-select-sm">
+                            <option value="developer">Developer</option>
+                            <option value="caller">Caller</option>
+                            <option value="partner">Partner</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label text-xs fw-600">Notes</label>
+                        <input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional notes…">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100">
+                        <i class="bi bi-person-plus me-1"></i>Add to Team
+                    </button>
+                </form>
+            </div>
+            <div class="card-body p-0">
+                <?php if (empty($assignments)): ?>
+                <div class="text-center text-muted py-3 small">No team members assigned yet.</div>
+                <?php else: ?>
+                <ul class="list-group list-group-flush">
+                    <?php
+                    $roleIcons = ['developer'=>'bi-code-slash','caller'=>'bi-telephone','partner'=>'bi-handshake'];
+                    $roleColors = ['developer'=>'bg-primary','caller'=>'bg-success','partner'=>'bg-purple'];
+                    foreach ($assignments as $a):
+                    ?>
+                    <li class="list-group-item px-3 py-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar-circle flex-shrink-0" style="width:30px;height:30px;font-size:.75rem">
+                                <?= strtoupper(substr($a['user_name'],0,1)) ?>
+                            </div>
+                            <div class="flex-grow-1 min-w-0">
+                                <div class="fw-600 text-sm text-truncate"><?= htmlspecialchars($a['user_name']) ?></div>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge bg-secondary" style="font-size:.68rem">
+                                        <i class="bi <?= $roleIcons[$a['role_type']] ?? 'bi-person' ?> me-1"></i><?= ucfirst($a['role_type']) ?>
+                                    </span>
+                                    <?php if ($a['category_name']): ?>
+                                    <span class="badge text-xs" style="font-size:.65rem;background:<?= $bgMap[$a['category_color'] ?? 'blue'] ?? '#dbeafe' ?>;color:<?= $colorMap[$a['category_color'] ?? 'blue'] ?? '#1d4ed8' ?>">
+                                        <?= htmlspecialchars($a['category_name']) ?>
+                                    </span>
+                                    <?php endif ?>
+                                </div>
+                                <?php if ($a['notes']): ?><div class="text-xs text-muted mt-1"><?= htmlspecialchars($a['notes']) ?></div><?php endif ?>
+                            </div>
+                            <form method="POST" action="<?= APP_URL ?>/admin/projects/assignment/<?= $a['id'] ?>/remove"
+                                  onsubmit="return confirm('Remove from team?')" class="flex-shrink-0">
+                                <?= CSRF::field() ?>
+                                <input type="hidden" name="project_id" value="<?= $project['id'] ?>">
+                                <button class="btn btn-xs btn-outline-danger"><i class="bi bi-x-lg"></i></button>
+                            </form>
+                        </div>
+                    </li>
+                    <?php endforeach ?>
+                </ul>
+                <?php endif ?>
             </div>
         </div>
 

@@ -42,10 +42,12 @@ class ProjectController extends Controller
         $project = $model->findWithDetails((int)$id);
         if (!$project) { $this->redirect(APP_URL . '/admin/projects'); return; }
 
-        $phases     = $model->getPhases((int)$id);
-        $notes      = $model->getNotes((int)$id, true);
-        $developers = (new User())->developers();
-        $unread     = (new Message())->unreadCount(Auth::id());
+        $phases      = $model->getPhases((int)$id);
+        $notes       = $model->getNotes((int)$id, true);
+        $developers  = (new User())->developers();
+        $unread      = (new Message())->unreadCount(Auth::id());
+        $assignments = $model->getAssignments((int)$id);
+        $allUsers    = (new User())->allActive();
 
         // Contracts and invoices
         $contracts = (new \App\Models\Contract())->forDeal($project['deal_id']);
@@ -53,15 +55,17 @@ class ProjectController extends Controller
         $expenses  = (new \App\Models\Expense())->forProject((int)$id);
 
         $this->view('admin.projects.show', [
-            'title'      => $project['title'],
-            'project'    => $project,
-            'phases'     => $phases,
-            'notes'      => $notes,
-            'developers' => $developers,
-            'contracts'  => $contracts,
-            'invoices'   => $invoices,
-            'expenses'   => $expenses,
-            'unread'     => $unread,
+            'title'       => $project['title'],
+            'project'     => $project,
+            'phases'      => $phases,
+            'notes'       => $notes,
+            'developers'  => $developers,
+            'contracts'   => $contracts,
+            'invoices'    => $invoices,
+            'expenses'    => $expenses,
+            'assignments' => $assignments,
+            'allUsers'    => $allUsers,
+            'unread'      => $unread,
         ]);
     }
 
@@ -395,5 +399,35 @@ class ProjectController extends Controller
             Session::flash('success', 'Phase updated.');
         }
         $this->redirect(APP_URL . '/developer/projects/' . $phase['project_id']);
+    }
+
+    // ── Admin: assign user to project team ────────────────────────────────────
+    public function assignUser(string $projectId): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+
+        $userId   = (int)($_POST['user_id']   ?? 0);
+        $roleType = $_POST['role_type'] ?? 'developer';
+        $notes    = trim($_POST['notes'] ?? '');
+        $valid    = ['caller', 'developer', 'partner'];
+
+        if ($userId && in_array($roleType, $valid)) {
+            (new Project())->addAssignment((int)$projectId, $userId, $roleType, Auth::id(), $notes);
+            Session::flash('success', 'Team member assigned.');
+        }
+        $this->redirect(APP_URL . '/admin/projects/' . $projectId);
+    }
+
+    // ── Admin: remove user from project team ─────────────────────────────────
+    public function removeUser(string $assignmentId): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+
+        $projectId = (int)($_POST['project_id'] ?? 0);
+        (new Project())->removeAssignment((int)$assignmentId);
+        Session::flash('success', 'Team member removed.');
+        $this->redirect(APP_URL . '/admin/projects/' . $projectId);
     }
 }

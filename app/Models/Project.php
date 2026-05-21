@@ -253,4 +253,36 @@ class Project extends Model
         $stmt->execute([$days]);
         return $stmt->fetchAll();
     }
+
+    public function getAssignments(int $projectId): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT pa.*, u.name AS user_name, u.email AS user_email,
+                   a.name AS assigned_by_name,
+                   uc.name AS category_name, uc.color AS category_color
+            FROM project_assignments pa
+            JOIN users u ON u.id = pa.user_id
+            LEFT JOIN users a ON a.id = pa.assigned_by
+            LEFT JOIN user_categories uc ON uc.id = u.category_id
+            WHERE pa.project_id = ?
+            ORDER BY pa.assigned_at ASC
+        ");
+        $stmt->execute([$projectId]);
+        return $stmt->fetchAll();
+    }
+
+    public function addAssignment(int $projectId, int $userId, string $roleType, int $assignedBy, string $notes = ''): void
+    {
+        $stmt = $this->db->prepare("
+            INSERT IGNORE INTO project_assignments
+              (project_id, user_id, role_type, assigned_by, notes)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([$projectId, $userId, $roleType, $assignedBy, $notes]);
+    }
+
+    public function removeAssignment(int $assignmentId): void
+    {
+        $this->db->prepare("DELETE FROM project_assignments WHERE id = ?")->execute([$assignmentId]);
+    }
 }

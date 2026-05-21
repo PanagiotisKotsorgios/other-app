@@ -54,6 +54,7 @@
         <?php navLink(APP_URL.'/admin/callers','people','Callers',$path) ?>
         <?php navLink(APP_URL.'/admin/developers','code-slash','Developers',$path) ?>
         <?php navLink(APP_URL.'/admin/partners','handshake','Partners',$path) ?>
+        <?php navLink(APP_URL.'/admin/categories','award','Categories',$path) ?>
 
         <li class="sidebar-section">Finance</li>
         <?php navLink(APP_URL.'/admin/deals','bag-check','Deals',$path) ?>

@@ -44,6 +44,18 @@ $router->post('/admin/partners/{id}/delete',     'AdminController@partnerDelete'
 // ── Admin: Roles ──────────────────────────────────────────
 $router->post('/admin/users/{id}/roles',         'AdminController@assignRoles');
 
+// ── Admin: Categories ─────────────────────────────────────
+$router->get('/admin/categories',                'CategoryController@index');
+$router->get('/admin/categories/create',         'CategoryController@create');
+$router->post('/admin/categories',               'CategoryController@store');
+$router->get('/admin/categories/{id}/edit',      'CategoryController@edit');
+$router->post('/admin/categories/{id}/update',   'CategoryController@update');
+$router->post('/admin/categories/{id}/delete',   'CategoryController@delete');
+
+// ── Admin: User Notes ─────────────────────────────────────
+$router->post('/admin/users/{id}/notes',              'AdminController@addUserNote');
+$router->post('/admin/users/notes/{noteId}/delete',   'AdminController@deleteUserNote');
+
 // ── Admin: Businesses ─────────────────────────────────────
 $router->get('/admin/businesses',                'BusinessController@index');
 $router->get('/admin/businesses/create',         'BusinessController@create');
@@ -87,6 +99,8 @@ $router->post('/admin/projects/phase/add',                  'ProjectController@a
 $router->post('/admin/projects/phase/{id}/update',          'ProjectController@updatePhase');
 $router->post('/admin/projects/phase/{id}/delete',          'ProjectController@deletePhase');
 $router->post('/admin/projects/note/add',                   'ProjectController@addNote');
+$router->post('/admin/projects/{id}/assign-user',           'ProjectController@assignUser');
+$router->post('/admin/projects/assignment/{assignmentId}/remove', 'ProjectController@removeUser');
 
 // ── Admin: Documents (Contracts & Invoices) ───────────────
 $router->post('/admin/documents/contracts/{dealId}/upload', 'DocumentController@uploadContract');

@@ -279,6 +279,16 @@ class User extends Model
         return $stmt->fetchAll();
     }
 
+    public function allActive(): array
+    {
+        $stmt = $this->db->query("
+            SELECT id, name, email, role FROM users
+            WHERE is_active = 1
+            ORDER BY name
+        ");
+        return $stmt->fetchAll();
+    }
+
     public function partnerRankingTable(): array
     {
         $stmt = $this->db->query("
