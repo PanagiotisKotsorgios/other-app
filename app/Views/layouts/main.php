@@ -89,8 +89,23 @@
         <?php elseif ($role === 'partner'): ?>
         <li class="sidebar-section">Κύριο</li>
         <?php navLink(APP_URL.'/partner/dashboard','speedometer2','Πίνακας Ελέγχου',$path) ?>
-        <?php navLink(APP_URL.'/partner/referrals','share','Οι Παραπομπές μου',$path) ?>
+
+        <li class="sidebar-section">Παραπομπές</li>
+        <?php navLink(APP_URL.'/partner/referrals?open=1','plus-circle','Νέα Παραπομπή',$path) ?>
+        <?php navLink(APP_URL.'/partner/referrals','share','Όλες οι Παραπομπές',$path) ?>
+        <?php navLink(APP_URL.'/partner/referrals?status=pending','hourglass-split','Εκκρεμείς',$path) ?>
+        <?php navLink(APP_URL.'/partner/referrals?status=approved','check-circle','Εγκεκριμένες',$path) ?>
+
+        <li class="sidebar-section">Οικονομικά</li>
         <?php navLink(APP_URL.'/partner/commissions','currency-euro','Προμήθειες',$path) ?>
+
+        <?php if($isDev): ?>
+        <li class="sidebar-section">Ανάπτυξη</li>
+        <?php navLink(APP_URL.'/developer/projects','kanban','Τα Έργα μου',$path) ?>
+        <?php navLink(APP_URL.'/developer/commissions','cash-coin','Προμήθειες Ανάπτυξης',$path) ?>
+        <?php endif ?>
+
+        <li class="sidebar-section">Άλλα</li>
         <li>
             <a href="<?= APP_URL ?>/caller/messages" class="nav-link <?= str_contains($path,'messages')?'active':'' ?>">
                 <i class="bi bi-envelope"></i>

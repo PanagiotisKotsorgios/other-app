@@ -145,9 +145,12 @@ class Deal extends Model
                 );
             }
 
-            // Partner commission if assigned
+            // Partner commission if assigned — take max of category rate and involvement level rate
             if (!empty($deal['partner_id'])) {
-                $partnerRate = $catModel->rateForUser($deal['partner_id'], 'partner') ?: PARTNER_COMMISSION_RATE;
+                $catRate  = $catModel->rateForUser($deal['partner_id'], 'partner') ?: PARTNER_COMMISSION_RATE;
+                $invRates = ['contact'=>10.0,'presentation'=>13.0,'active_support'=>16.0,'full_closure'=>20.0];
+                $invRate  = $invRates[$deal['partner_involvement'] ?? ''] ?? null;
+                $partnerRate = $invRate !== null ? max($catRate, $invRate) : $catRate;
                 $commissionModel->createForRole(
                     $id,
                     $deal['partner_id'],

@@ -13,7 +13,14 @@ $deal = $deal ?? [];
                     <tr><th class="text-muted fw-normal" width="40%">Επιχείρηση</th><td class="fw-semibold"><?= htmlspecialchars($deal['company_name'] ?? '') ?></td></tr>
                     <tr><th class="text-muted fw-normal">Τηλεφωνητής</th><td><?= htmlspecialchars($deal['caller_name'] ?? '') ?></td></tr>
                     <tr><th class="text-muted fw-normal">Προγραμματιστής</th><td><?= htmlspecialchars($deal['developer_name'] ?? '—') ?></td></tr>
-                    <tr><th class="text-muted fw-normal">Συνεργάτης</th><td><?= htmlspecialchars($deal['partner_name'] ?? '—') ?></td></tr>
+                    <tr><th class="text-muted fw-normal">Συνεργάτης</th><td>
+                        <?= htmlspecialchars($deal['partner_name'] ?? '—') ?>
+                        <?php if(!empty($deal['partner_involvement'])): ?>
+                        <span class="badge bg-info text-dark ms-1" title="Επίπεδο συμμετοχής">
+                            <?= grInvolvement($deal['partner_involvement']) ?>
+                        </span>
+                        <?php endif ?>
+                    </td></tr>
                     <tr><th class="text-muted fw-normal">Υπηρεσία</th><td><?= htmlspecialchars($deal['service_name'] ?? '—') ?></td></tr>
                     <tr><th class="text-muted fw-normal">Ποσό</th><td class="fw-bold fs-5 text-success">€<?= number_format($deal['amount'] ?? 0, 2) ?></td></tr>
                     <tr><th class="text-muted fw-normal">Κατάσταση</th><td>
@@ -40,12 +47,28 @@ $deal = $deal ?? [];
             <div class="card-header bg-white fw-semibold"><i class="bi bi-currency-euro me-1"></i> Σύνοψη Προμήθειας</div>
             <div class="card-body">
                 <table class="table table-sm mb-0">
-                    <tr><td>Τηλεφωνητής (<?= COMMISSION_RATE ?>%)</td><td class="text-end fw-semibold">€<?= number_format($deal['amount'] * COMMISSION_RATE / 100, 2) ?></td></tr>
+                    <?php
+                    $catModel = new \App\Models\Category();
+                    $callerRate = $catModel->rateForUser($deal['caller_id'] ?? 0, 'caller') ?: COMMISSION_RATE;
+                    ?>
+                    <tr><td>Τηλεφωνητής (<?= $callerRate ?>%)</td><td class="text-end fw-semibold">€<?= number_format($deal['amount'] * $callerRate / 100, 2) ?></td></tr>
                     <?php if(!empty($deal['developer_id'])): ?>
-                    <tr><td>Προγραμματιστής (20%)</td><td class="text-end fw-semibold">€<?= number_format($deal['amount'] * 0.20, 2) ?></td></tr>
+                    <?php $devRate = $catModel->rateForUser($deal['developer_id'], 'developer') ?: DEVELOPER_COMMISSION_RATE; ?>
+                    <tr><td>Προγραμματιστής (<?= $devRate ?>%)</td><td class="text-end fw-semibold">€<?= number_format($deal['amount'] * $devRate / 100, 2) ?></td></tr>
                     <?php endif ?>
                     <?php if(!empty($deal['partner_id'])): ?>
-                    <tr><td>Συνεργάτης (20%)</td><td class="text-end fw-semibold">€<?= number_format($deal['amount'] * 0.20, 2) ?></td></tr>
+                    <?php
+                    $pCatRate = $catModel->rateForUser($deal['partner_id'], 'partner') ?: PARTNER_COMMISSION_RATE;
+                    $invRates = ['contact'=>10.0,'presentation'=>13.0,'active_support'=>16.0,'full_closure'=>20.0];
+                    $pInvRate = $invRates[$deal['partner_involvement'] ?? ''] ?? null;
+                    $pRate    = $pInvRate !== null ? max($pCatRate, $pInvRate) : $pCatRate;
+                    ?>
+                    <tr><td>
+                        Συνεργάτης (<?= $pRate ?>%)
+                        <?php if(!empty($deal['partner_involvement'])): ?>
+                        <span class="text-muted small">· <?= grInvolvement($deal['partner_involvement']) ?></span>
+                        <?php endif ?>
+                    </td><td class="text-end fw-semibold">€<?= number_format($deal['amount'] * $pRate / 100, 2) ?></td></tr>
                     <?php endif ?>
                 </table>
             </div>

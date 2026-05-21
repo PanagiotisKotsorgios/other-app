@@ -99,15 +99,18 @@ class PartnerController extends Controller
         $adminStmt = $db->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
         $admin     = $adminStmt->fetch();
 
+        $validInvolvement = ['contact', 'presentation', 'active_support', 'full_closure'];
+        $involvement = $_POST['partner_involvement'] ?? '';
         $dealData = [
-            'business_id' => $businessId,
-            'caller_id'   => $admin['id'] ?? Auth::id(),
-            'partner_id'  => Auth::id(),
-            'service_id'  => !empty($_POST['service_id']) ? (int)$_POST['service_id'] : null,
-            'amount'      => $amount,
-            'currency'    => 'EUR',
-            'notes'       => trim($_POST['notes'] ?? ''),
-            'status'      => 'pending',
+            'business_id'         => $businessId,
+            'caller_id'           => $admin['id'] ?? Auth::id(),
+            'partner_id'          => Auth::id(),
+            'service_id'          => !empty($_POST['service_id']) ? (int)$_POST['service_id'] : null,
+            'amount'              => $amount,
+            'currency'            => 'EUR',
+            'notes'               => trim($_POST['notes'] ?? ''),
+            'status'              => 'pending',
+            'partner_involvement' => in_array($involvement, $validInvolvement) ? $involvement : 'contact',
         ];
 
         (new Deal())->create($dealData);

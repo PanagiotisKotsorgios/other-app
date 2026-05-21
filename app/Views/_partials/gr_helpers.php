@@ -112,3 +112,25 @@ if (!function_exists('grRoleType')) {
         };
     }
 }
+if (!function_exists('grInvolvement')) {
+    function grInvolvement(string $v): string {
+        return match($v) {
+            'contact'        => 'Απλή Επαφή',
+            'presentation'   => 'Παρουσίαση',
+            'active_support' => 'Ενεργή Υποστήριξη',
+            'full_closure'   => 'Πλήρες Κλείσιμο',
+            default          => ucfirst(str_replace('_', ' ', $v)),
+        };
+    }
+}
+if (!function_exists('involvementRate')) {
+    function involvementRate(string $v): float {
+        return match($v) {
+            'contact'        => 10.0,
+            'presentation'   => 13.0,
+            'active_support' => 16.0,
+            'full_closure'   => 20.0,
+            default          => 0.0,
+        };
+    }
+}
