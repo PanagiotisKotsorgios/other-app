@@ -75,14 +75,12 @@ body.sidebar-body {
     box-shadow: 0 4px 10px rgba(37,99,235,.4);
 }
 .sidebar-brand-text {
-    font-size: .9rem;
-    font-weight: 700;
+    font-size: .92rem;
+    font-weight: 800;
     color: #f1f5f9;
     letter-spacing: -.2px;
-    line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.25;
+    white-space: normal;
 }
 
 /* Nav section label */

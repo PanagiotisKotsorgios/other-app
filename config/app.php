@@ -1,6 +1,6 @@
 <?php
 
-define('APP_NAME',  $_ENV['APP_NAME']  ?? 'Call Center CRM');
+define('APP_NAME', 'SoftSystems Partnership Portal');
 define('APP_ENV',   $_ENV['APP_ENV']   ?? 'production');
 define('APP_DEBUG', filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN));
 define('APP_URL',   $_ENV['APP_URL']   ?? 'http://localhost');

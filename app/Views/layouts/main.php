@@ -25,8 +25,7 @@
 
     <!-- Λογότυπο -->
     <a class="sidebar-brand" href="<?= APP_URL ?>">
-        <div class="sidebar-brand-icon"><i class="bi bi-headset"></i></div>
-        <span class="sidebar-brand-text"><?= htmlspecialchars(APP_NAME) ?></span>
+        <span class="sidebar-brand-text">SoftSystems<br><span style="color:#93c5fd;font-weight:600;font-size:.78rem">Partnership Portal</span></span>
     </a>
 
     <?php

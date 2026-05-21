@@ -52,27 +52,16 @@
         }
 
         .brand-logo {
-            display: flex;
-            align-items: center;
-            gap: .75rem;
             margin-bottom: 3rem;
             position: relative;
             z-index: 1;
         }
-        .brand-logo-icon {
-            width: 48px; height: 48px;
-            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.4rem;
-            color: #fff;
-            box-shadow: 0 8px 20px rgba(59,130,246,.4);
-        }
         .brand-logo-text {
-            font-size: 1.25rem;
-            font-weight: 700;
+            font-size: 1.3rem;
+            font-weight: 800;
             color: #fff;
-            letter-spacing: -.3px;
+            letter-spacing: -.4px;
+            line-height: 1.25;
         }
         .brand-logo-text span { color: #93c5fd; }
 
@@ -329,25 +318,24 @@
 <!-- Αριστερά: πάνελ εταιρίας -->
 <div class="auth-brand">
     <div class="brand-logo">
-        <div class="brand-logo-icon"><i class="bi bi-headset"></i></div>
-        <div class="brand-logo-text"><?= htmlspecialchars(APP_NAME) ?></div>
+        <div class="brand-logo-text">SoftSystems<br><span>Partnership Portal</span></div>
     </div>
 
-    <h1 class="brand-headline">Διαχειριστείτε την<br>αλυσίδα πωλήσεών σας<br>με <em>ακρίβεια.</em></h1>
-    <p class="brand-sub">Ένα πλήρες CRM για ομάδες τηλεφωνικού κέντρου — παρακολουθήστε κάθε κλήση, συμφωνία και προμήθεια σε ένα μέρος.</p>
+    <h1 class="brand-headline">Το δίκτυο<br>συνεργατών σας,<br>οργανωμένο <em>τέλεια.</em></h1>
+    <p class="brand-sub">Παρακολουθήστε παραπομπές, συμφωνίες, προμήθειες και έργα — για κάθε συνεργάτη, προγραμματιστή και τηλεφωνητή σε ένα μέρος.</p>
 
     <ul class="brand-features">
         <li>
-            <span class="feat-icon"><i class="bi bi-telephone-fill"></i></span>
-            Πλήρες ιστορικό αλληλεπιδράσεων ανά επιχείρηση
+            <span class="feat-icon"><i class="bi bi-share-fill"></i></span>
+            Πλήρης διαχείριση παραπομπών & επιπέδων συμμετοχής
         </li>
         <li>
             <span class="feat-icon"><i class="bi bi-graph-up-arrow"></i></span>
-            Αναλυτικά συμφωνιών & εσόδων σε πραγματικό χρόνο
+            Αναλυτικά εσόδων & προμηθειών σε πραγματικό χρόνο
         </li>
         <li>
             <span class="feat-icon"><i class="bi bi-people-fill"></i></span>
-            Πολλαπλοί ρόλοι: τηλεφωνητές, προγραμματιστές, συνεργάτες
+            Πολλαπλοί ρόλοι & κατηγορίες με διαφορετικά ποσοστά
         </li>
         <li>
             <span class="feat-icon"><i class="bi bi-shield-check"></i></span>
