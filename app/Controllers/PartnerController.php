@@ -1,10 +1,9 @@
 <?php
-// E:\call_center\app\Controllers\PartnerController.php
 
 namespace App\Controllers;
 
 use App\Core\{Controller, Auth, CSRF, Session};
-use App\Models\{Deal, Commission, User, Business, Service, Message};
+use App\Models\{Deal, Commission, User, Business, Service, Message, Category};
 
 class PartnerController extends Controller
 {
@@ -12,18 +11,24 @@ class PartnerController extends Controller
     {
         Auth::requirePartner();
 
-        $userModel = new User();
-        $commModel = new Commission();
-        $dealModel = new Deal();
+        $userModel   = new User();
+        $commModel   = new Commission();
+        $dealModel   = new Deal();
 
+        $user        = $userModel->findWithCategory(Auth::id());
         $stats       = $userModel->partnerStats(Auth::id());
+        $roles       = $userModel->getRoles(Auth::id());
+        $isDeveloper = in_array('developer', $roles);
         $recentDeals = $dealModel->forPartner(Auth::id(), [], 1, 5);
-        $commData    = $commModel->forPartner(Auth::id(), 1, 5);
+        $commData    = $commModel->forUser(Auth::id(), 1, 5);
         $unread      = (new Message())->unreadCount(Auth::id());
 
         $this->view('partner.dashboard', [
-            'title'       => 'Partner Dashboard',
+            'title'       => 'Πίνακας Ελέγχου Συνεργάτη',
             'stats'       => $stats,
+            'user'        => $user,
+            'roles'       => $roles,
+            'isDeveloper' => $isDeveloper,
             'recentDeals' => $recentDeals['data'],
             'commData'    => $commData['data'],
             'unread'      => $unread,
@@ -38,21 +43,23 @@ class PartnerController extends Controller
         $model   = new Deal();
         $result  = $model->forPartner(Auth::id(), $filters, $page, 20);
 
-        // Commission breakdown
-        $commModel = new Commission();
-        $commData  = $commModel->forPartner(Auth::id(), 1, 100);
-        // Index by deal_id for quick lookup
+        $commModel  = new Commission();
+        $commData   = $commModel->forUser(Auth::id(), 1, 500);
         $commByDeal = [];
         foreach ($commData['data'] as $c) {
-            $commByDeal[$c['deal_id']] = $c;
+            if ($c['role_type'] === 'partner') {
+                $commByDeal[$c['deal_id']] = $c;
+            }
         }
 
+        $user   = (new User())->findWithCategory(Auth::id());
         $unread = (new Message())->unreadCount(Auth::id());
 
         $this->view('partner.referrals.index', $result + [
-            'title'       => 'My Referrals',
+            'title'       => 'Οι Παραπομπές Μου',
             'filters'     => $filters,
             'commByDeal'  => $commByDeal,
+            'partnerRate' => $user['partner_rate'] ?? 20,
             'unread'      => $unread,
         ]);
     }
@@ -62,11 +69,9 @@ class PartnerController extends Controller
         Auth::requirePartner();
         CSRF::check();
 
-        // Find or create business
         $businessId = !empty($_POST['business_id']) ? (int)$_POST['business_id'] : null;
 
         if (!$businessId) {
-            // Create a minimal business record
             $bizData = [
                 'company_name' => trim($_POST['company_name'] ?? ''),
                 'phone'        => trim($_POST['phone'] ?? ''),
@@ -85,14 +90,12 @@ class PartnerController extends Controller
 
         $amount = (float)($_POST['amount'] ?? 0);
         if ($amount <= 0) {
-            Session::flash('error', 'Deal amount must be greater than 0.');
+            Session::flash('error', 'Το ποσό της συμφωνίας πρέπει να είναι μεγαλύτερο από 0.');
             $this->redirect(APP_URL . '/partner/referrals');
             return;
         }
 
-        // Partner submits referral as a deal; caller_id points to themselves or an admin
-        // Use the first admin as caller fallback
-        $db       = \Database::getInstance();
+        $db        = \Database::getInstance();
         $adminStmt = $db->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
         $admin     = $adminStmt->fetch();
 
@@ -108,7 +111,7 @@ class PartnerController extends Controller
         ];
 
         (new Deal())->create($dealData);
-        Session::flash('success', 'Referral submitted! An admin will review it shortly.');
+        Session::flash('success', 'Η παραπομπή υποβλήθηκε! Ένας διαχειριστής θα την αξιολογήσει σύντομα.');
         $this->redirect(APP_URL . '/partner/referrals');
     }
 
@@ -117,11 +120,11 @@ class PartnerController extends Controller
         Auth::requirePartner();
         $page   = max(1, (int)($_GET['page'] ?? 1));
         $model  = new Commission();
-        $result = $model->forPartner(Auth::id(), $page, 20);
+        $result = $model->forUser(Auth::id(), $page, 20);
         $unread = (new Message())->unreadCount(Auth::id());
 
         $this->view('partner.commissions', $result + [
-            'title'  => 'My Commissions',
+            'title'  => 'Οι Προμήθειές Μου',
             'unread' => $unread,
         ]);
     }

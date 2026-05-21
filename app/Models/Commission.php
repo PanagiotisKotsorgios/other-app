@@ -209,6 +209,37 @@ class Commission extends Model
         return $result;
     }
 
+    public function forUser(int $userId, int $page = 1, int $perPage = 20): array
+    {
+        $offset    = ($page - 1) * $perPage;
+        $countStmt = $this->db->prepare("SELECT COUNT(*) FROM commissions WHERE caller_id = ?");
+        $countStmt->execute([$userId]);
+        $total = (int)$countStmt->fetchColumn();
+
+        $stmt = $this->db->prepare("
+            SELECT c.*, d.amount AS deal_amount, d.status AS deal_status,
+                   b.company_name, s.name AS service_name,
+                   p.title AS project_title
+            FROM commissions c
+            JOIN deals d      ON d.id = c.deal_id
+            JOIN businesses b ON b.id = d.business_id
+            LEFT JOIN services s ON s.id = d.service_id
+            LEFT JOIN projects p ON p.deal_id = d.id
+            WHERE c.caller_id = ?
+            ORDER BY c.created_at DESC
+            LIMIT {$perPage} OFFSET {$offset}
+        ");
+        $stmt->execute([$userId]);
+
+        return [
+            'data'         => $stmt->fetchAll(),
+            'total'        => $total,
+            'per_page'     => $perPage,
+            'current_page' => $page,
+            'last_page'    => (int)ceil($total / $perPage),
+        ];
+    }
+
     public function createForRole(int $dealId, int $userId, float $amount, float $rate, string $roleType): int
     {
         // Check if already exists

@@ -91,3 +91,24 @@ if (!function_exists('grExpCat')) {
         };
     }
 }
+if (!function_exists('grCategory')) {
+    function grCategory(string $name): string {
+        return match(strtoupper($name)) {
+            'A' => 'Κατηγορία Α',
+            'B' => 'Κατηγορία Β',
+            'C' => 'Κατηγορία Γ',
+            'D' => 'Κατηγορία Δ',
+            default => 'Κατηγορία ' . strtoupper($name),
+        };
+    }
+}
+if (!function_exists('grRoleType')) {
+    function grRoleType(string $r): string {
+        return match($r) {
+            'caller'    => 'Τηλεφωνητής',
+            'developer' => 'Ανάπτυξη',
+            'partner'   => 'Παραπομπή',
+            default     => ucfirst($r),
+        };
+    }
+}

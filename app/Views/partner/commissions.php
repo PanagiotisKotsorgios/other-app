@@ -1,15 +1,21 @@
+<?php require_once __DIR__ . '/../_partials/gr_helpers.php'; ?>
 <div class="card border-0 shadow-sm mt-2">
-    <div class="card-header bg-white fw-semibold"><i class="bi bi-currency-euro me-1 text-success"></i> Οι Προμήθειές Μου (Συνεργάτης)</div>
+    <div class="card-header bg-white fw-semibold"><i class="bi bi-currency-euro me-1 text-success"></i> Οι Προμήθειές Μου</div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
-                    <tr><th>Επιχείρηση</th><th>Ποσό Συμφωνίας</th><th>Προμήθεια</th><th>Ποσοστό</th><th>Κατάσταση</th><th>Ημερομηνία</th></tr>
+                    <tr><th>Επιχείρηση</th><th>Τύπος</th><th>Ποσό Συμφωνίας</th><th>Προμήθεια</th><th>Ποσοστό</th><th>Κατάσταση</th><th>Ημερομηνία</th></tr>
                 </thead>
                 <tbody>
                 <?php foreach ($data as $c): ?>
                     <tr>
                         <td><?= htmlspecialchars($c['company_name']) ?></td>
+                        <td>
+                            <span class="badge <?= $c['role_type']==='developer' ? 'bg-primary' : 'bg-success' ?>">
+                                <?= grRoleType($c['role_type']) ?>
+                            </span>
+                        </td>
                         <td>€<?= number_format($c['deal_amount'],2) ?></td>
                         <td class="fw-bold text-success">€<?= number_format($c['amount'],2) ?></td>
                         <td><?= $c['rate'] ?>%</td>
@@ -18,7 +24,7 @@
                     </tr>
                 <?php endforeach ?>
                 <?php if(empty($data)): ?>
-                    <tr><td colspan="6" class="text-center text-muted py-4">Δεν υπάρχουν προμήθειες.</td></tr>
+                    <tr><td colspan="7" class="text-center text-muted py-4">Δεν υπάρχουν προμήθειες.</td></tr>
                 <?php endif ?>
                 </tbody>
             </table>

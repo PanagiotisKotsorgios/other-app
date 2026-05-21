@@ -189,19 +189,19 @@ class Deal extends Model
     {
         $ok = $this->update($dealId, ['developer_id' => $developerId]);
         if ($ok) {
-            // Also update the project if it exists
             $stmt = $this->db->prepare("UPDATE projects SET developer_id = ?, status = 'in_progress' WHERE deal_id = ?");
             $stmt->execute([$developerId, $dealId]);
 
-            // Create developer commission if deal is approved
             $deal = $this->find($dealId);
             if ($deal && in_array($deal['status'], ['approved', 'in_progress', 'completed'])) {
+                $catModel = new Category();
+                $devRate  = $catModel->rateForUser($developerId, 'developer') ?: DEVELOPER_COMMISSION_RATE;
                 $commModel = new Commission();
                 $commModel->createForRole(
                     $dealId,
                     $developerId,
-                    $deal['amount'] * DEVELOPER_COMMISSION_RATE / 100,
-                    DEVELOPER_COMMISSION_RATE,
+                    $deal['amount'] * $devRate / 100,
+                    $devRate,
                     'developer'
                 );
             }
@@ -215,12 +215,14 @@ class Deal extends Model
         if ($ok) {
             $deal = $this->find($dealId);
             if ($deal && in_array($deal['status'], ['approved', 'in_progress', 'completed'])) {
-                $commModel = new Commission();
+                $catModel    = new Category();
+                $partnerRate = $catModel->rateForUser($partnerId, 'partner') ?: PARTNER_COMMISSION_RATE;
+                $commModel   = new Commission();
                 $commModel->createForRole(
                     $dealId,
                     $partnerId,
-                    $deal['amount'] * PARTNER_COMMISSION_RATE / 100,
-                    PARTNER_COMMISSION_RATE,
+                    $deal['amount'] * $partnerRate / 100,
+                    $partnerRate,
                     'partner'
                 );
             }

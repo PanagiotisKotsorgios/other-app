@@ -57,7 +57,8 @@ $userId = $partner['id'];
                                 <option value="">— Καμία —</option>
                                 <?php foreach ($categories as $cat): ?>
                                 <option value="<?= $cat['id'] ?>" <?= ($partner['category_id'] ?? null) == $cat['id'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($cat['name']) ?> — <?= htmlspecialchars($cat['label']) ?>
+                                    <?= grCategory($cat['name']) ?> — <?= htmlspecialchars($cat['label']) ?>
+                                    (Παρ: <?= $cat['partner_rate'] ?>% | Ανάπτ: <?= $cat['developer_rate'] ?>%)
                                 </option>
                                 <?php endforeach ?>
                             </select>
@@ -101,16 +102,37 @@ $userId = $partner['id'];
                         <?= htmlspecialchars($currentCat['name']) ?>
                     </span>
                     <div>
-                        <div class="fw-600"><?= htmlspecialchars($currentCat['label']) ?></div>
+                        <div class="fw-600"><?= grCategory($currentCat['name']) ?> — <?= htmlspecialchars($currentCat['label']) ?></div>
                         <?php if($currentCat['description']): ?>
                         <div class="text-xs text-muted"><?= htmlspecialchars($currentCat['description']) ?></div>
                         <?php endif ?>
                     </div>
                 </div>
-                <div class="stat-box text-center">
-                    <div class="stat-val"><?= number_format($currentCat['partner_rate'], 1) ?>%</div>
-                    <div class="stat-lbl">Ποσοστό Προμήθειας Συνεργάτη</div>
+                <div class="row g-2">
+                    <div class="col">
+                        <div class="stat-box text-center">
+                            <div class="stat-val" style="color:<?= $txt ?>"><?= number_format($currentCat['partner_rate'], 1) ?>%</div>
+                            <div class="stat-lbl">Παραπομπή</div>
+                        </div>
+                    </div>
+                    <?php if(in_array('developer', $roles ?? [])): ?>
+                    <div class="col">
+                        <div class="stat-box text-center">
+                            <div class="stat-val" style="color:#1d4ed8"><?= number_format($currentCat['developer_rate'], 1) ?>%</div>
+                            <div class="stat-lbl">Ανάπτυξη</div>
+                        </div>
+                    </div>
+                    <?php endif ?>
+                    <?php if(in_array('caller', $roles ?? [])): ?>
+                    <div class="col">
+                        <div class="stat-box text-center">
+                            <div class="stat-val" style="color:#0f766e"><?= number_format($currentCat['caller_rate'], 1) ?>%</div>
+                            <div class="stat-lbl">Τηλεφωνητής</div>
+                        </div>
+                    </div>
+                    <?php endif ?>
                 </div>
+                <div class="form-text mt-2 text-center">Τα ποσοστά αλλάζουν αλλάζοντας την Κατηγορία.</div>
                 <?php else: ?>
                 <div class="text-center text-muted py-3 text-sm">
                     <i class="bi bi-award fs-2 d-block mb-2 opacity-25"></i>

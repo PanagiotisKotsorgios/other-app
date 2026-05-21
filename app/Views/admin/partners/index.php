@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . '/../../_partials/gr_helpers.php'; ?>
 <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
     <form method="GET" class="d-flex gap-2">
         <input type="text" name="search" class="form-control form-control-sm" placeholder="Αναζήτηση συνεργατών..." value="<?= htmlspecialchars($search ?? '') ?>">
@@ -6,23 +7,57 @@
     <a href="<?= APP_URL ?>/admin/partners/create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Προσθήκη Συνεργάτη</a>
 </div>
 
+<?php
+$catColorMap = [
+    'green'  => ['bg' => '#dcfce7', 'txt' => '#166534'],
+    'blue'   => ['bg' => '#dbeafe', 'txt' => '#1d4ed8'],
+    'orange' => ['bg' => '#fff7ed', 'txt' => '#c2410c'],
+    'red'    => ['bg' => '#fee2e2', 'txt' => '#b91c1c'],
+    'purple' => ['bg' => '#f3e8ff', 'txt' => '#7e22ce'],
+    'teal'   => ['bg' => '#ccfbf1', 'txt' => '#0f766e'],
+];
+?>
+
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
-                    <tr><th>Ονοματεπώνυμο</th><th>Email</th><th>Τηλέφωνο</th><th>Παραπομπές</th><th>Έσοδα</th><th>Κερδισμένη Προμήθεια</th><th>Οφειλόμενη Προμήθεια</th><th>Κατάσταση</th><th></th></tr>
+                    <tr><th>Ονοματεπώνυμο</th><th>Email</th><th>Κατηγορία</th><th>Ρόλοι</th><th>Παραπομπές</th><th>Έσοδα</th><th>Εκκρεμής Προμήθεια</th><th>Κατάσταση</th><th></th></tr>
                 </thead>
                 <tbody>
                 <?php foreach ($data as $partner): ?>
-                    <?php $st = $partner['stats'] ?? []; ?>
+                    <?php
+                    $st     = $partner['stats'] ?? [];
+                    $color  = $catColorMap[$partner['cat_color'] ?? ''] ?? null;
+                    $allRoles = array_filter(explode(',', $partner['all_roles'] ?? ''));
+                    ?>
                     <tr>
                         <td class="fw-semibold"><?= htmlspecialchars($partner['name']) ?></td>
-                        <td><?= htmlspecialchars($partner['email']) ?></td>
-                        <td><?= htmlspecialchars($partner['phone'] ?? '—') ?></td>
+                        <td class="text-muted small"><?= htmlspecialchars($partner['email']) ?></td>
+                        <td>
+                            <?php if(!empty($partner['cat_name']) && $color): ?>
+                            <span class="badge fw-700 px-2"
+                                  style="background:<?= $color['bg'] ?>;color:<?= $color['txt'] ?>;border:1px solid <?= $color['txt'] ?>30"
+                                  title="<?= htmlspecialchars($partner['cat_label'] ?? '') ?>">
+                                <?= htmlspecialchars($partner['cat_name']) ?>
+                            </span>
+                            <span class="text-muted small ms-1"><?= number_format($partner['partner_rate'] ?? 0, 0) ?>%</span>
+                            <?php elseif(!empty($partner['cat_name'])): ?>
+                            <span class="badge bg-secondary"><?= htmlspecialchars($partner['cat_name']) ?></span>
+                            <?php else: ?>
+                            <span class="text-muted small">—</span>
+                            <?php endif ?>
+                        </td>
+                        <td>
+                            <?php foreach($allRoles as $r): ?>
+                            <span class="badge <?= match($r){'partner'=>'bg-success','developer'=>'bg-primary','caller'=>'bg-info text-dark','admin'=>'bg-danger',default=>'bg-secondary'} ?> me-1">
+                                <?= grRole($r) ?>
+                            </span>
+                            <?php endforeach ?>
+                        </td>
                         <td><?= $st['total_referrals'] ?? 0 ?></td>
                         <td class="text-success fw-semibold">€<?= number_format($st['revenue_generated'] ?? 0, 2) ?></td>
-                        <td>€<?= number_format($st['commission_earned'] ?? 0, 2) ?></td>
                         <td class="text-warning fw-semibold">€<?= number_format($st['commission_owed'] ?? 0, 2) ?></td>
                         <td>
                             <span class="badge <?= $partner['is_active'] ? 'bg-success' : 'bg-secondary' ?>">

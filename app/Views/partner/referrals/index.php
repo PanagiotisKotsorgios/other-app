@@ -44,7 +44,7 @@ require_once __DIR__ . '/../../_partials/gr_helpers.php';
                             <?php if($comm): ?>
                             €<?= number_format($comm['amount'],2) ?> (<?= $comm['rate'] ?>%)
                             <?php elseif(in_array($deal['status'],['approved','in_progress','completed'])): ?>
-                            €<?= number_format($deal['amount']*0.20,2) ?> (20%)
+                            €<?= number_format($deal['amount']*($partnerRate??20)/100,2) ?> (<?= number_format($partnerRate??20,1) ?>%)
                             <?php else: ?>
                             <span class="text-muted">Αναμονή έγκρισης</span>
                             <?php endif ?>

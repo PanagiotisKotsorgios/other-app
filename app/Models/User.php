@@ -167,9 +167,16 @@ class User extends Model
         $total = (int)$countStmt->fetchColumn();
 
         $stmt = $this->db->prepare("
-            SELECT u.* FROM users u
+            SELECT u.*,
+                   uc.name AS cat_name, uc.label AS cat_label, uc.color AS cat_color,
+                   uc.partner_rate, uc.developer_rate,
+                   GROUP_CONCAT(DISTINCT ur2.role ORDER BY ur2.role SEPARATOR ',') AS all_roles
+            FROM users u
             JOIN user_roles ur ON ur.user_id = u.id
+            LEFT JOIN user_roles ur2 ON ur2.user_id = u.id
+            LEFT JOIN user_categories uc ON uc.id = u.category_id
             WHERE {$whereStr}
+            GROUP BY u.id
             ORDER BY u.name
             LIMIT {$perPage} OFFSET {$offset}
         ");
@@ -240,21 +247,45 @@ class User extends Model
     {
         $stmt = $this->db->prepare("
             SELECT
-                COUNT(DISTINCT d.id)                                                      AS total_referrals,
+                COUNT(DISTINCT d.id) AS total_referrals,
                 COALESCE(SUM(CASE WHEN d.status IN ('approved','in_progress','completed') THEN d.amount ELSE 0 END), 0) AS revenue_generated,
                 COALESCE((
                     SELECT SUM(c.amount) FROM commissions c
-                    WHERE c.caller_id = ? AND c.role_type = 'partner'
-                ), 0)                                                                     AS commission_earned,
+                    WHERE c.caller_id = ? AND c.role_type IN ('partner','developer')
+                ), 0) AS commission_earned,
                 COALESCE((
                     SELECT SUM(c2.amount) FROM commissions c2
-                    WHERE c2.caller_id = ? AND c2.role_type = 'partner' AND c2.is_paid = 0
-                ), 0)                                                                     AS commission_owed
+                    WHERE c2.caller_id = ? AND c2.role_type IN ('partner','developer') AND c2.is_paid = 0
+                ), 0) AS commission_owed,
+                COALESCE((
+                    SELECT SUM(c3.amount) FROM commissions c3
+                    WHERE c3.caller_id = ? AND c3.role_type = 'partner'
+                ), 0) AS partner_commission_earned,
+                COALESCE((
+                    SELECT SUM(c4.amount) FROM commissions c4
+                    WHERE c4.caller_id = ? AND c4.role_type = 'developer'
+                ), 0) AS developer_commission_earned
             FROM deals d
             WHERE d.partner_id = ?
         ");
-        $stmt->execute([$partnerId, $partnerId, $partnerId]);
+        $stmt->execute([$partnerId, $partnerId, $partnerId, $partnerId, $partnerId]);
         return $stmt->fetch() ?: [];
+    }
+
+    public function findWithCategory(int $userId): ?array
+    {
+        $stmt = $this->db->prepare("
+            SELECT u.*,
+                   uc.name AS cat_name, uc.label AS cat_label, uc.color AS cat_color,
+                   uc.caller_rate, uc.developer_rate, uc.partner_rate,
+                   uc.description AS cat_description
+            FROM users u
+            LEFT JOIN user_categories uc ON uc.id = u.category_id
+            WHERE u.id = ?
+        ");
+        $stmt->execute([$userId]);
+        $row = $stmt->fetch();
+        return $row ?: null;
     }
 
     public function rankingTable(): array

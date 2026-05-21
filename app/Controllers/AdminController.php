@@ -333,8 +333,13 @@ class AdminController extends Controller
     public function partnerCreate(): void
     {
         Auth::requireAdmin();
-        $unread = (new Message())->unreadCount(Auth::id());
-        $this->view('admin.partners.create', ['title' => 'Add Partner', 'unread' => $unread]);
+        $unread     = (new Message())->unreadCount(Auth::id());
+        $categories = (new Category())->all();
+        $this->view('admin.partners.create', [
+            'title'      => 'Προσθήκη Συνεργάτη',
+            'categories' => $categories,
+            'unread'     => $unread,
+        ]);
     }
 
     public function partnerStore(): void
@@ -343,12 +348,13 @@ class AdminController extends Controller
         CSRF::check();
 
         $data   = [
-            'name'      => trim($_POST['name'] ?? ''),
-            'email'     => trim($_POST['email'] ?? ''),
-            'password'  => $_POST['password'] ?? '',
-            'phone'     => trim($_POST['phone'] ?? ''),
-            'role'      => 'partner',
-            'is_active' => 1,
+            'name'        => trim($_POST['name'] ?? ''),
+            'email'       => trim($_POST['email'] ?? ''),
+            'password'    => $_POST['password'] ?? '',
+            'phone'       => trim($_POST['phone'] ?? ''),
+            'role'        => 'partner',
+            'is_active'   => 1,
+            'category_id' => !empty($_POST['category_id']) ? (int)$_POST['category_id'] : null,
         ];
         $errors = $this->validate($data, [
             'name'     => 'required|max:120',
@@ -365,10 +371,18 @@ class AdminController extends Controller
 
         $model = new User();
         $id    = $model->createUser($data);
-        $model->addRole($id, 'partner');
 
-        Session::flash('success', 'Partner created successfully.');
-        $this->redirect(APP_URL . '/admin/partners');
+        // Always add partner role; add any extra roles selected
+        $roles = ['partner'];
+        foreach ($_POST['extra_roles'] ?? [] as $r) {
+            if (in_array($r, ['developer', 'caller', 'admin'])) {
+                $roles[] = $r;
+            }
+        }
+        $model->syncRoles($id, array_unique($roles));
+
+        Session::flash('success', 'Ο συνεργάτης δημιουργήθηκε επιτυχώς.');
+        $this->redirect(APP_URL . '/admin/partners/' . $id . '/edit');
     }
 
     public function partnerEdit(string $id): void
