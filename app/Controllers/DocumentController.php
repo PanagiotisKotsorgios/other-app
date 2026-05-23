@@ -4,7 +4,7 @@
 namespace App\Controllers;
 
 use App\Core\{Controller, Auth, CSRF, Session};
-use App\Models\{Contract, Invoice, Deal, Message};
+use App\Models\{Contract, Invoice, Deal, Message, PartnerDocument};
 
 class DocumentController extends Controller
 {
@@ -231,6 +231,79 @@ class DocumentController extends Controller
         (new Invoice())->markPaid((int)$id);
         Session::flash('success', 'Invoice marked as paid.');
         $this->redirect(APP_URL . '/admin/deals/' . $invoice['deal_id']);
+    }
+
+    // ── Partner Documents (admin) ─────────────────────────────────────────────
+
+    public function uploadPartnerDoc(string $partnerId): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+
+        $docType = $_POST['doc_type'] ?? 'contract';
+        if (!in_array($docType, ['contract', 'client_invoice'])) {
+            Session::flash('error', 'Μη έγκυρος τύπος εγγράφου.');
+            $this->redirect(APP_URL . '/admin/partners/' . $partnerId . '/edit');
+            return;
+        }
+
+        if (empty($_FILES['doc_file']['name'])) {
+            Session::flash('error', 'Δεν επιλέχθηκε αρχείο.');
+            $this->redirect(APP_URL . '/admin/partners/' . $partnerId . '/edit');
+            return;
+        }
+
+        $file    = $_FILES['doc_file'];
+        $ext     = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = ['pdf', 'doc', 'docx'];
+
+        if (!in_array($ext, $allowed) || $file['size'] > UPLOAD_MAX_SIZE) {
+            Session::flash('error', 'Μη έγκυρος τύπος ή μέγεθος αρχείου (PDF, DOC, DOCX, έως 10MB).');
+            $this->redirect(APP_URL . '/admin/partners/' . $partnerId . '/edit');
+            return;
+        }
+
+        $uploadDir = UPLOAD_PATH . '/partner_docs/';
+        if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+
+        $prefix   = $docType === 'contract' ? 'pcon_' : 'pclinv_';
+        $filename = uniqid($prefix) . '_' . time() . '.' . $ext;
+        if (!move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+            Session::flash('error', 'Αποτυχία μεταφόρτωσης αρχείου.');
+            $this->redirect(APP_URL . '/admin/partners/' . $partnerId . '/edit');
+            return;
+        }
+
+        (new PartnerDocument())->create([
+            'partner_id'    => (int)$partnerId,
+            'doc_type'      => $docType,
+            'filename'      => $filename,
+            'original_name' => basename($file['name']),
+            'title'         => trim($_POST['title'] ?? ''),
+            'amount'        => !empty($_POST['amount']) ? (float)$_POST['amount'] : null,
+            'notes'         => trim($_POST['notes'] ?? ''),
+            'uploaded_by'   => Auth::id(),
+        ]);
+
+        Session::flash('success', 'Το έγγραφο μεταφορτώθηκε επιτυχώς.');
+        $this->redirect(APP_URL . '/admin/partners/' . $partnerId . '/edit');
+    }
+
+    public function deletePartnerDoc(string $id): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+
+        $model = new PartnerDocument();
+        $doc   = $model->find((int)$id);
+        if (!$doc) { $this->back(); return; }
+
+        $path = UPLOAD_PATH . '/partner_docs/' . $doc['filename'];
+        if (file_exists($path)) unlink($path);
+
+        $model->delete((int)$id);
+        Session::flash('success', 'Το έγγραφο διαγράφηκε.');
+        $this->redirect(APP_URL . '/admin/partners/' . $doc['partner_id'] . '/edit');
     }
 
     public function updateInvoice(string $id): void

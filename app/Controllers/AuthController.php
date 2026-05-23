@@ -59,7 +59,7 @@ class AuthController extends Controller
         Auth::requireLogin();
         $userModel = new User();
         $user      = $userModel->find(Auth::id());
-        $this->view('auth.profile', ['title' => 'My Profile', 'user' => $user]);
+        $this->view('auth.profile', ['title' => 'Το Προφίλ μου', 'user' => $user]);
     }
 
     public function profileUpdate(): void
@@ -67,15 +67,29 @@ class AuthController extends Controller
         Auth::requireLogin();
         CSRF::check();
 
+        $userModel = new User();
+        $email     = trim($_POST['email'] ?? '');
+
+        if ($email) {
+            $existing = $userModel->findByEmail($email);
+            if ($existing && (int)$existing['id'] !== Auth::id()) {
+                Session::flash('error', 'Το email χρησιμοποιείται ήδη από άλλο λογαριασμό.');
+                $this->redirect(APP_URL . '/auth/profile');
+                return;
+            }
+        }
+
         $data = [
             'name'  => trim($_POST['name'] ?? ''),
             'phone' => trim($_POST['phone'] ?? ''),
         ];
+        if ($email) {
+            $data['email'] = $email;
+        }
 
-        $userModel = new User();
         $userModel->update(Auth::id(), $data);
         Session::set('user_name', $data['name']);
-        Session::flash('success', 'Profile updated.');
+        Session::flash('success', 'Το προφίλ σας ενημερώθηκε.');
         $this->redirect(APP_URL . '/auth/profile');
     }
 
@@ -84,27 +98,33 @@ class AuthController extends Controller
         Auth::requireLogin();
         CSRF::check();
 
-        $current  = $_POST['current_password'] ?? '';
-        $new      = $_POST['new_password'] ?? '';
-        $confirm  = $_POST['confirm_password'] ?? '';
+        $current = $_POST['current_password'] ?? '';
+        $new     = $_POST['new_password'] ?? '';
+        $confirm = $_POST['confirm_password'] ?? '';
 
         $userModel = new User();
         $user      = $userModel->find(Auth::id());
 
         if (!password_verify($current, $user['password'])) {
-            Session::flash('error', 'Current password is incorrect.');
+            Session::flash('error', 'Ο τρέχων κωδικός είναι λανθασμένος.');
             $this->redirect(APP_URL . '/auth/profile');
             return;
         }
 
-        if ($new !== $confirm || strlen($new) < 8) {
-            Session::flash('error', 'New passwords do not match or are too short (min 8 chars).');
+        if (strlen($new) < 8) {
+            Session::flash('error', 'Ο νέος κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.');
+            $this->redirect(APP_URL . '/auth/profile');
+            return;
+        }
+
+        if ($new !== $confirm) {
+            Session::flash('error', 'Οι κωδικοί δεν ταιριάζουν.');
             $this->redirect(APP_URL . '/auth/profile');
             return;
         }
 
         $userModel->updatePassword(Auth::id(), $new);
-        Session::flash('success', 'Password changed successfully.');
+        Session::flash('success', 'Ο κωδικός σας άλλαξε επιτυχώς.');
         $this->redirect(APP_URL . '/auth/profile');
     }
 }

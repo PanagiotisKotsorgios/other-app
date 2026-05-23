@@ -86,17 +86,29 @@
         </li>
 
         <?php elseif ($role === 'partner'): ?>
+        <?php
+        $uri          = $_SERVER['REQUEST_URI'];
+        $onReferrals  = str_contains($uri, '/partner/referrals');
+        $isNewRef     = $onReferrals && str_contains($uri, 'open=1');
+        $isPendingRef = $onReferrals && str_contains($uri, 'status=pending');
+        $isApprovedRef= $onReferrals && str_contains($uri, 'status=approved');
+        $isAllRef     = $onReferrals && !$isNewRef && !$isPendingRef && !$isApprovedRef;
+        ?>
         <li class="sidebar-section">Κύριο</li>
         <?php navLink(APP_URL.'/partner/dashboard','speedometer2','Πίνακας Ελέγχου',$path) ?>
 
         <li class="sidebar-section">Παραπομπές</li>
-        <?php navLink(APP_URL.'/partner/referrals?open=1','plus-circle','Νέα Παραπομπή',$path) ?>
-        <?php navLink(APP_URL.'/partner/referrals','share','Όλες οι Παραπομπές',$path) ?>
-        <?php navLink(APP_URL.'/partner/referrals?status=pending','hourglass-split','Εκκρεμείς',$path) ?>
-        <?php navLink(APP_URL.'/partner/referrals?status=approved','check-circle','Εγκεκριμένες',$path) ?>
+        <li><a href="<?= APP_URL ?>/partner/referrals?open=1" class="nav-link <?= $isNewRef?'active':'' ?>"><i class="bi bi-plus-circle"></i><span>Νέα Παραπομπή</span></a></li>
+        <li><a href="<?= APP_URL ?>/partner/referrals" class="nav-link <?= $isAllRef?'active':'' ?>"><i class="bi bi-share"></i><span>Όλες οι Παραπομπές</span></a></li>
+        <li><a href="<?= APP_URL ?>/partner/referrals?status=pending" class="nav-link <?= $isPendingRef?'active':'' ?>"><i class="bi bi-hourglass-split"></i><span>Εκκρεμείς</span></a></li>
+        <li><a href="<?= APP_URL ?>/partner/referrals?status=approved" class="nav-link <?= $isApprovedRef?'active':'' ?>"><i class="bi bi-check-circle"></i><span>Εγκεκριμένες</span></a></li>
 
         <li class="sidebar-section">Οικονομικά</li>
         <?php navLink(APP_URL.'/partner/commissions','currency-euro','Προμήθειες',$path) ?>
+
+        <li class="sidebar-section">Έγγραφα</li>
+        <?php navLink(APP_URL.'/partner/contract','file-text','Σύμβαση',$path) ?>
+        <?php navLink(APP_URL.'/partner/invoices','receipt','Τιμολόγια',$path) ?>
 
         <?php if($isDev): ?>
         <li class="sidebar-section">Ανάπτυξη</li>

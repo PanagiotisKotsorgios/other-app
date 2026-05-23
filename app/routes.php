@@ -139,6 +139,15 @@ $router->get('/partner/dashboard',                          'PartnerController@d
 $router->get('/partner/referrals',                          'PartnerController@referrals');
 $router->post('/partner/referrals/submit',                  'PartnerController@submitReferral');
 $router->get('/partner/commissions',                        'PartnerController@commissions');
+$router->get('/partner/contract',                           'PartnerController@contract');
+$router->get('/partner/invoices',                           'PartnerController@invoices');
+$router->post('/partner/invoices/upload',                   'PartnerController@uploadInvoice');
+$router->get('/partner/documents/{id}/download',            'PartnerController@downloadDocument');
+$router->post('/partner/documents/{id}/delete',             'PartnerController@deleteDocument');
+
+// ── Admin: Partner Documents ──────────────────────────────
+$router->post('/admin/partners/{id}/documents/upload',      'DocumentController@uploadPartnerDoc');
+$router->post('/admin/partner-documents/{id}/delete',       'DocumentController@deletePartnerDoc');
 
 // ── Caller Dashboard ──────────────────────────────────────
 $router->get('/caller/dashboard', 'CallerController@dashboard');
@@ -167,6 +176,9 @@ $router->post('/caller/messages/send',    'MessageController@send');
 $router->get('/caller/messages/{id}',     'MessageController@show');
 
 // ── API ───────────────────────────────────────────────────
-$router->get('/api/messages/unread', 'MessageController@unreadCount');
+$router->get('/api/messages/unread',        'MessageController@unreadCount');
+$router->get('/api/messages/{id}',          'MessageController@apiGet');
+$router->post('/api/messages/{id}/read',    'MessageController@apiMarkRead');
+$router->post('/api/messages/{id}/reply',   'MessageController@apiReply');
 
 return $router;

@@ -145,3 +145,107 @@ $userId = $partner['id'];
         <?php include __DIR__ . '/../../_partials/user_notes.php' ?>
     </div>
 </div>
+
+<!-- Έγγραφα Συνεργάτη -->
+<div class="card mt-4 border-0 shadow-sm">
+    <div class="card-header fw-semibold d-flex align-items-center gap-2">
+        <i class="bi bi-folder2-open me-1"></i>Έγγραφα Συνεργάτη
+        <button type="button" class="btn btn-sm btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#uploadPartnerDocModal">
+            <i class="bi bi-upload me-1"></i>Ανέβασμα Εγγράφου
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <?php
+        $docTypeLabels = ['contract'=>'Σύμβαση','partner_invoice'=>'Τιμολόγιο Συνεργάτη','client_invoice'=>'Τιμολόγιο Πελάτη'];
+        $docTypeColors = ['contract'=>'primary','partner_invoice'=>'success','client_invoice'=>'warning'];
+        ?>
+        <?php if (empty($partnerDocs)): ?>
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-inbox fs-2 d-block mb-2 opacity-25"></i>
+            Δεν υπάρχουν έγγραφα ακόμα.
+        </div>
+        <?php else: ?>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr><th>Τύπος</th><th>Τίτλος</th><th>Ποσό</th><th>Αρχείο</th><th>Σημειώσεις</th><th>Ημερομηνία</th><th></th></tr>
+                </thead>
+                <tbody>
+                <?php foreach ($partnerDocs as $doc): ?>
+                <tr>
+                    <td>
+                        <span class="badge bg-<?= $docTypeColors[$doc['doc_type']] ?? 'secondary' ?>">
+                            <?= $docTypeLabels[$doc['doc_type']] ?? $doc['doc_type'] ?>
+                        </span>
+                    </td>
+                    <td class="fw-semibold"><?= htmlspecialchars($doc['title'] ?: '—') ?></td>
+                    <td><?= $doc['amount'] !== null ? '€'.number_format((float)$doc['amount'],2) : '—' ?></td>
+                    <td class="text-muted small"><?= htmlspecialchars($doc['original_name']) ?></td>
+                    <td class="text-muted small"><?= htmlspecialchars($doc['notes'] ?? '—') ?></td>
+                    <td class="text-muted small"><?= date('d M Y', strtotime($doc['created_at'])) ?></td>
+                    <td class="text-end">
+                        <a href="<?= APP_URL ?>/partner/documents/<?= $doc['id'] ?>/download"
+                           class="btn btn-sm btn-outline-primary me-1">
+                            <i class="bi bi-download"></i>
+                        </a>
+                        <form method="POST" action="<?= APP_URL ?>/admin/partner-documents/<?= $doc['id'] ?>/delete"
+                              class="d-inline" onsubmit="return confirm('Διαγραφή εγγράφου;')">
+                            <?= CSRF::field() ?>
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                <?php endforeach ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif ?>
+    </div>
+</div>
+
+<!-- Modal Ανεβάσματος Εγγράφου -->
+<div class="modal fade" id="uploadPartnerDocModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="<?= APP_URL ?>/admin/partners/<?= $userId ?>/documents/upload" enctype="multipart/form-data">
+            <?= CSRF::field() ?>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-upload me-2"></i>Ανέβασμα Εγγράφου Συνεργάτη</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Τύπος Εγγράφου *</label>
+                        <select name="doc_type" class="form-select" required>
+                            <option value="contract">Σύμβαση Συνεργασίας</option>
+                            <option value="client_invoice">Τιμολόγιο προς Πελάτη</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Τίτλος</label>
+                        <input type="text" name="title" class="form-control" placeholder="π.χ. Σύμβαση 2026 ή Τιμολόγιο #001">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ποσό (€)</label>
+                        <input type="number" name="amount" class="form-control" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Αρχείο *</label>
+                        <input type="file" name="doc_file" class="form-control" accept=".pdf,.doc,.docx" required>
+                        <div class="form-text">PDF, DOC, DOCX — έως 10MB</div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label">Σημειώσεις</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Ακύρωση</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Μεταφόρτωση</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

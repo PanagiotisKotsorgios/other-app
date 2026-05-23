@@ -4,7 +4,7 @@
 namespace App\Controllers;
 
 use App\Core\{Controller, Auth, CSRF, Session};
-use App\Models\{User, Business, Deal, Commission, Interaction, Message, Project, Expense, Category, UserNote};
+use App\Models\{User, Business, Deal, Commission, Interaction, Message, Project, Expense, Category, UserNote, PartnerDocument};
 
 class AdminController extends Controller
 {
@@ -395,13 +395,15 @@ class AdminController extends Controller
         $unread     = (new Message())->unreadCount(Auth::id());
         $categories = (new Category())->all();
         $notes      = (new UserNote())->forUser((int)$id);
+        $partnerDocs= (new PartnerDocument())->forPartner((int)$id);
         $this->view('admin.partners.edit', [
-            'title'      => 'Edit Partner',
-            'partner'    => $partner,
-            'roles'      => $roles,
-            'categories' => $categories,
-            'notes'      => $notes,
-            'unread'     => $unread,
+            'title'       => 'Επεξεργασία Συνεργάτη',
+            'partner'     => $partner,
+            'roles'       => $roles,
+            'categories'  => $categories,
+            'notes'       => $notes,
+            'partnerDocs' => $partnerDocs,
+            'unread'      => $unread,
         ]);
     }
 

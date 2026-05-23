@@ -3,10 +3,8 @@ use App\Core\CSRF;
 require_once __DIR__ . '/../../_partials/gr_helpers.php';
 
 $involvementInfo = [
-    'contact'        => ['label'=>'Απλή Επαφή',          'desc'=>'Έδωσα μόνο τα στοιχεία επικοινωνίας', 'rate'=>10, 'icon'=>'telephone', 'color'=>'info'],
-    'presentation'   => ['label'=>'Παρουσίαση',           'desc'=>'Παρουσίασα τις υπηρεσίες στον πελάτη', 'rate'=>13, 'icon'=>'easel',    'color'=>'primary'],
-    'active_support' => ['label'=>'Ενεργή Υποστήριξη',    'desc'=>'Βοήθησα ενεργά στη διαπραγμάτευση',   'rate'=>16, 'icon'=>'people',    'color'=>'warning'],
-    'full_closure'   => ['label'=>'Πλήρες Κλείσιμο',      'desc'=>'Έκλεισα το deal εξ ολοκλήρου μόνος μου','rate'=>20,'icon'=>'trophy',   'color'=>'success'],
+    'contact'      => ['label'=>'Απλή Επαφή',     'desc'=>'Έφερα σε επαφή και έδωσα τα στοιχεία επικοινωνίας', 'rate'=>10, 'icon'=>'telephone', 'color'=>'info'],
+    'full_closure' => ['label'=>'Πλήρες Κλείσιμο','desc'=>'Διαχειρίστηκα και έκλεισα το deal εξ ολοκλήρου',     'rate'=>20, 'icon'=>'trophy',    'color'=>'success'],
 ];
 $autoOpen = !empty($_GET['open']);
 ?>
@@ -115,7 +113,7 @@ $autoOpen = !empty($_GET['open']);
                         <label class="form-label fw-semibold">Επίπεδο Συμμετοχής σας *</label>
                         <div class="row g-2">
                             <?php foreach ($involvementInfo as $key => $inv): ?>
-                            <div class="col-6 col-md-3">
+                            <div class="col-6">
                                 <input type="radio" class="btn-check" name="partner_involvement"
                                        id="inv_<?= $key ?>" value="<?= $key ?>"
                                        <?= $key === 'contact' ? 'checked' : '' ?>>
@@ -185,7 +183,7 @@ $autoOpen = !empty($_GET['open']);
 
 <script>
 (function() {
-    var rates = {contact:10, presentation:13, active_support:16, full_closure:20};
+    var rates = {contact:10, full_closure:20};
     var catRate = <?= (float)($partnerRate ?? 20) ?>;
     var amtEl   = document.getElementById('referralAmount');
     var preview = document.getElementById('commissionPreview');

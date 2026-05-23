@@ -6,7 +6,7 @@ $error  = Session::getFlash('error');
 ?>
 
 <h2>Καλώς ήρθατε</h2>
-<p class="auth-sub">Συνδεθείτε στον λογαριασμό σας για να συνεχίσετε.</p>
+<p class="auth-sub">Συνδεθείτε για να αποκτήσετε πρόσβαση στο portal σας.</p>
 
 <?php if ($error): ?>
 <div class="auth-alert">

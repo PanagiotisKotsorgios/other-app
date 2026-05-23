@@ -119,6 +119,73 @@ class MessageController extends Controller
         $this->json(['count' => $count]);
     }
 
+    public function apiGet(string $id): void
+    {
+        Auth::requireLogin();
+        $model  = new Message();
+        $thread = $model->thread((int)$id);
+
+        if (empty($thread)) { $this->json(['error' => 'Not found'], 404); return; }
+
+        $first = $thread[0];
+        if ($first['receiver_id'] != Auth::id() && $first['sender_id'] != Auth::id()) {
+            $this->json(['error' => 'Forbidden'], 403);
+            return;
+        }
+
+        // mark all unread in thread as read
+        foreach ($thread as $msg) {
+            if ($msg['receiver_id'] == Auth::id() && !$msg['is_read']) {
+                $model->markRead((int)$msg['id'], Auth::id());
+            }
+        }
+
+        // fetch receiver name for first message
+        $userModel = new User();
+        $receiver  = $userModel->find($first['receiver_id']);
+
+        $out = array_map(fn($m) => [
+            'id'            => $m['id'],
+            'sender_id'     => $m['sender_id'],
+            'sender_name'   => $m['sender_name'],
+            'receiver_id'   => $m['receiver_id'],
+            'receiver_name' => $receiver['name'] ?? '',
+            'subject'       => $m['subject'],
+            'body'          => $m['body'],
+            'created_at'    => $m['created_at'],
+            'is_read'       => (bool)$m['is_read'],
+            'is_mine'       => $m['sender_id'] == Auth::id(),
+        ], $thread);
+
+        $this->json(['thread' => $out, 'reply_to_id' => $first['sender_id'] == Auth::id() ? $first['receiver_id'] : $first['sender_id']]);
+    }
+
+    public function apiMarkRead(string $id): void
+    {
+        Auth::requireLogin();
+        $model = new Message();
+        $model->markRead((int)$id, Auth::id());
+        $this->json(['ok' => true, 'unread' => $model->unreadCount(Auth::id())]);
+    }
+
+    public function apiReply(string $id): void
+    {
+        Auth::requireLogin();
+
+        $model      = new Message();
+        $thread     = $model->thread((int)$id);
+        if (empty($thread)) { $this->json(['error' => 'Not found'], 404); return; }
+
+        $first      = $thread[0];
+        $receiverId = $first['sender_id'] == Auth::id() ? $first['receiver_id'] : $first['sender_id'];
+        $body       = trim($_POST['body'] ?? '');
+
+        if (!$body) { $this->json(['error' => 'Το μήνυμα δεν μπορεί να είναι κενό.'], 422); return; }
+
+        $model->send(Auth::id(), $receiverId, 'Απ: ' . $first['subject'], $body, (int)$id);
+        $this->json(['ok' => true]);
+    }
+
     private function view_prefix(): string
     {
         return Auth::isAdmin() ? 'admin.' : 'caller.';
