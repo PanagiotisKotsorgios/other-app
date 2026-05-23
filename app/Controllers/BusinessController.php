@@ -180,6 +180,49 @@ class BusinessController extends Controller
         ]);
     }
 
+    public function callerCreate(): void
+    {
+        Auth::requireCaller();
+        $unread = (new Message())->unreadCount(Auth::id());
+        $this->view('caller.businesses.create', ['title' => 'Νέο Lead', 'unread' => $unread]);
+    }
+
+    public function callerStore(): void
+    {
+        Auth::requireCaller();
+        CSRF::check();
+
+        $data = [
+            'company_name' => trim($_POST['company_name'] ?? ''),
+            'contact_name' => trim($_POST['contact_name'] ?? ''),
+            'email'        => trim($_POST['email'] ?? ''),
+            'phone'        => trim($_POST['phone'] ?? ''),
+            'website'      => trim($_POST['website'] ?? ''),
+            'address'      => trim($_POST['address'] ?? ''),
+            'city'         => trim($_POST['city'] ?? ''),
+            'country'      => trim($_POST['country'] ?? ''),
+            'category'     => trim($_POST['category'] ?? ''),
+            'notes'        => trim($_POST['notes'] ?? ''),
+            'status'       => 'new',
+            'created_by'   => Auth::id(),
+        ];
+
+        $errors = $this->validate($data, ['company_name' => 'required|max:200']);
+        if ($errors) {
+            Session::flash('errors', $errors);
+            Session::flash('old', $data);
+            $this->redirect(APP_URL . '/caller/businesses/create');
+            return;
+        }
+
+        $model = new Business();
+        $bid   = $model->create($data);
+        $model->bulkAssign([$bid], Auth::id(), Auth::id());
+
+        Session::flash('success', 'Το lead καταχωρήθηκε επιτυχώς.');
+        $this->redirect(APP_URL . '/caller/businesses/' . $bid);
+    }
+
     public function show(string $id): void
     {
         Auth::requireLogin();
