@@ -126,6 +126,8 @@ $router->get('/admin/financials/expenses',                  'FinancialController
 $router->post('/admin/financials/expenses',                 'FinancialController@storeExpense');
 $router->post('/admin/financials/expenses/{id}/update',     'FinancialController@updateExpense');
 $router->post('/admin/financials/expenses/{id}/delete',     'FinancialController@deleteExpense');
+$router->get('/admin/financials/export/excel',              'FinancialController@exportExcel');
+$router->get('/admin/financials/export/pdf',                'FinancialController@exportPdf');
 
 // ── Admin: Messages ───────────────────────────────────────
 $router->get('/admin/messages',         'MessageController@inbox');

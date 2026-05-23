@@ -2,6 +2,15 @@
 require_once __DIR__ . '/../../_partials/gr_helpers.php';
 ?>
 
+<div class="d-flex justify-content-end gap-2 mt-2 mb-1">
+    <a href="<?= APP_URL ?>/admin/financials/export/excel" class="btn btn-sm btn-outline-success">
+        <i class="bi bi-file-earmark-excel me-1"></i>Εξαγωγή Excel
+    </a>
+    <a href="<?= APP_URL ?>/admin/financials/export/pdf" class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Εξαγωγή PDF
+    </a>
+</div>
+
 <div class="row g-3 mt-1">
     <!-- Κάρτες Σύνοψης -->
     <div class="col-6 col-xl-3">
