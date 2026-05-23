@@ -205,4 +205,18 @@ class DealController extends Controller
         Session::flash('success', 'Partner assigned.');
         $this->redirect(APP_URL . '/admin/deals/' . $id);
     }
+
+    public function bulkDelete(): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+        $ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? []))));
+        if (empty($ids)) { $this->redirect(APP_URL . '/admin/deals'); return; }
+
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        \Database::getInstance()->prepare("DELETE FROM deals WHERE id IN ($ph)")->execute($ids);
+
+        Session::flash('success', count($ids) . ' συμφωνίες διαγράφηκαν.');
+        $this->redirect(APP_URL . '/admin/deals');
+    }
 }

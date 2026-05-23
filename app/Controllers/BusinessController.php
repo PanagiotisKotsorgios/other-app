@@ -180,6 +180,22 @@ class BusinessController extends Controller
         ]);
     }
 
+    public function bulkDelete(): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+        $ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? []))));
+        if (empty($ids)) { $this->redirect(APP_URL . '/admin/businesses'); return; }
+
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        $db = \Database::getInstance();
+        $db->prepare("DELETE FROM deals      WHERE business_id IN ($ph)")->execute($ids);
+        $db->prepare("DELETE FROM businesses WHERE id          IN ($ph)")->execute($ids);
+
+        Session::flash('success', count($ids) . ' επιχειρήσεις διαγράφηκαν.');
+        $this->redirect(APP_URL . '/admin/businesses');
+    }
+
     public function callerCreate(): void
     {
         Auth::requireCaller();

@@ -20,6 +20,7 @@ $router->get('/admin/dashboard', 'AdminController@dashboard');
 $router->get('/admin/callers',                   'AdminController@callers');
 $router->get('/admin/callers/create',            'AdminController@callerCreate');
 $router->post('/admin/callers',                  'AdminController@callerStore');
+$router->post('/admin/callers/bulk-delete',      'AdminController@bulkDeleteCallers');
 $router->get('/admin/callers/{id}/edit',         'AdminController@callerEdit');
 $router->post('/admin/callers/{id}/update',      'AdminController@callerUpdate');
 $router->post('/admin/callers/{id}/delete',      'AdminController@callerDelete');
@@ -29,6 +30,7 @@ $router->get('/admin/callers/{id}/stats',        'AdminController@callerStats');
 $router->get('/admin/developers',                'AdminController@developers');
 $router->get('/admin/developers/create',         'AdminController@developerCreate');
 $router->post('/admin/developers',               'AdminController@developerStore');
+$router->post('/admin/developers/bulk-delete',   'AdminController@bulkDeleteDevelopers');
 $router->get('/admin/developers/{id}/edit',      'AdminController@developerEdit');
 $router->post('/admin/developers/{id}/update',   'AdminController@developerUpdate');
 $router->post('/admin/developers/{id}/delete',   'AdminController@developerDelete');
@@ -37,6 +39,7 @@ $router->post('/admin/developers/{id}/delete',   'AdminController@developerDelet
 $router->get('/admin/partners',                  'AdminController@partners');
 $router->get('/admin/partners/create',           'AdminController@partnerCreate');
 $router->post('/admin/partners',                 'AdminController@partnerStore');
+$router->post('/admin/partners/bulk-delete',     'AdminController@bulkDeletePartners');
 $router->get('/admin/partners/{id}/edit',        'AdminController@partnerEdit');
 $router->post('/admin/partners/{id}/update',     'AdminController@partnerUpdate');
 $router->post('/admin/partners/{id}/delete',     'AdminController@partnerDelete');
@@ -60,11 +63,12 @@ $router->post('/admin/users/notes/{noteId}/delete',   'AdminController@deleteUse
 $router->get('/admin/businesses',                'BusinessController@index');
 $router->get('/admin/businesses/create',         'BusinessController@create');
 $router->post('/admin/businesses',               'BusinessController@store');
+$router->post('/admin/businesses/bulk-assign',   'BusinessController@bulkAssign');
+$router->post('/admin/businesses/bulk-delete',   'BusinessController@bulkDelete');
 $router->get('/admin/businesses/{id}',           'BusinessController@show');
 $router->get('/admin/businesses/{id}/edit',      'BusinessController@edit');
 $router->post('/admin/businesses/{id}/update',   'BusinessController@update');
 $router->post('/admin/businesses/{id}/delete',   'BusinessController@delete');
-$router->post('/admin/businesses/bulk-assign',   'BusinessController@bulkAssign');
 
 // ── Admin: Import ─────────────────────────────────────────
 $router->get('/admin/import',          'ImportController@index');
@@ -73,6 +77,7 @@ $router->post('/admin/import/run',     'ImportController@import');
 
 // ── Admin: Deals ──────────────────────────────────────────
 $router->get('/admin/deals',                          'DealController@adminIndex');
+$router->post('/admin/deals/bulk-delete',             'DealController@bulkDelete');
 $router->get('/admin/deals/{id}',                     'DealController@adminShow');
 $router->post('/admin/deals/{id}/approve',            'DealController@approve');
 $router->post('/admin/deals/{id}/reject',             'DealController@reject');
@@ -84,6 +89,8 @@ $router->post('/admin/deals/{id}/assign-partner',     'DealController@assignPart
 
 // ── Admin: Commissions ────────────────────────────────────
 $router->get('/admin/commissions',               'CommissionController@adminIndex');
+$router->post('/admin/commissions/bulk-delete',  'CommissionController@bulkDelete');
+$router->post('/admin/commissions/bulk-paid',    'CommissionController@bulkMarkPaid');
 $router->post('/admin/commissions/{id}/paid',    'CommissionController@markPaid');
 $router->post('/admin/commissions/{id}/unpaid',  'CommissionController@markUnpaid');
 

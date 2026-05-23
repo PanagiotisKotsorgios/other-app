@@ -2,7 +2,11 @@
 require_once __DIR__ . '/../../_partials/gr_helpers.php';
 ?>
 <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
-    <div></div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-danger btn-sm d-none" id="bulkDeleteBtn">
+            <i class="bi bi-trash me-1"></i>Διαγραφή Επιλεγμένων (<span id="bulkCount">0</span>)
+        </button>
+    </div>
     <a href="<?= APP_URL ?>/admin/callers/create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Προσθήκη Τηλεφωνητή</a>
 </div>
 
@@ -21,11 +25,15 @@ require_once __DIR__ . '/../../_partials/gr_helpers.php';
     <div class="card-body p-0">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
-                <tr><th>Ονοματεπώνυμο</th><th>Email</th><th>Τηλέφωνο</th><th>Κατάσταση</th><th>Ενέργειες</th></tr>
+                <tr>
+                    <th style="width:36px"><input type="checkbox" id="checkAll" class="form-check-input"></th>
+                    <th>Ονοματεπώνυμο</th><th>Email</th><th>Τηλέφωνο</th><th>Κατάσταση</th><th>Ενέργειες</th>
+                </tr>
             </thead>
             <tbody>
             <?php foreach ($data as $c): ?>
             <tr>
+                <td><input type="checkbox" class="form-check-input row-check" value="<?= $c['id'] ?>"></td>
                 <td><?= htmlspecialchars($c['name']) ?></td>
                 <td><?= htmlspecialchars($c['email']) ?></td>
                 <td><?= htmlspecialchars($c['phone']??'—') ?></td>
@@ -41,9 +49,18 @@ require_once __DIR__ . '/../../_partials/gr_helpers.php';
                 </td>
             </tr>
             <?php endforeach ?>
-            <?php if(empty($data)): ?><tr><td colspan="5" class="text-center py-4 text-muted">Δεν βρέθηκαν τηλεφωνητές.</td></tr><?php endif ?>
+            <?php if(empty($data)): ?><tr><td colspan="6" class="text-center py-4 text-muted">Δεν βρέθηκαν τηλεφωνητές.</td></tr><?php endif ?>
             </tbody>
         </table>
     </div>
     <?php if($last_page > 1): ?><div class="card-footer bg-white"><?php include __DIR__ . '/../../_partials/pagination.php' ?></div><?php endif ?>
 </div>
+<form id="bulkDeleteForm" method="POST" action="<?= APP_URL ?>/admin/callers/bulk-delete" class="d-none">
+    <?= CSRF::field() ?>
+</form>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initBulkDelete('.row-check', 'checkAll', 'bulkCount', 'bulkDeleteBtn', 'bulkDeleteForm',
+        'Διαγραφή {n} τηλεφωνητών; Θα διαγραφούν επίσης τα deals και οι προμήθειές τους. Η ενέργεια είναι μόνιμη.');
+});
+</script>

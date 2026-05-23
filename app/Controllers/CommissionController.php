@@ -72,4 +72,34 @@ class CommissionController extends Controller
             'unread'  => $unread,
         ]);
     }
+
+    public function bulkDelete(): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+        $ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? []))));
+        if (empty($ids)) { $this->redirect(APP_URL . '/admin/commissions'); return; }
+
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        \Database::getInstance()->prepare("DELETE FROM commissions WHERE id IN ($ph)")->execute($ids);
+
+        Session::flash('success', count($ids) . ' προμήθειες διαγράφηκαν.');
+        $this->redirect(APP_URL . '/admin/commissions');
+    }
+
+    public function bulkMarkPaid(): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+        $ids = array_values(array_filter(array_map('intval', (array)($_POST['ids'] ?? []))));
+        if (empty($ids)) { $this->redirect(APP_URL . '/admin/commissions'); return; }
+
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        \Database::getInstance()->prepare(
+            "UPDATE commissions SET is_paid=1, paid_at=NOW() WHERE id IN ($ph)"
+        )->execute($ids);
+
+        Session::flash('success', count($ids) . ' προμήθειες σημάνθηκαν ως πληρωμένες.');
+        $this->redirect(APP_URL . '/admin/commissions');
+    }
 }

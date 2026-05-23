@@ -226,5 +226,42 @@
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script src="<?= APP_URL ?>/assets/js/app.js"></script>
+<script>
+function initBulkDelete(checkSel, checkAllId, countId, deleteBtnId, deleteFormId, confirmMsg) {
+    const checkAll  = document.getElementById(checkAllId);
+    const countEl   = document.getElementById(countId);
+    const deleteBtn = document.getElementById(deleteBtnId);
+    const deleteForm = document.getElementById(deleteFormId);
+    const paidBtn   = document.getElementById('bulkPaidBtn');
+
+    function getChecked() { return document.querySelectorAll(checkSel + ':checked'); }
+
+    function updateBar() {
+        const n = getChecked().length;
+        if (countEl)   countEl.textContent = n;
+        if (deleteBtn) deleteBtn.classList.toggle('d-none', n === 0);
+        if (paidBtn)   paidBtn.classList.toggle('d-none',   n === 0);
+    }
+
+    checkAll?.addEventListener('change', function() {
+        document.querySelectorAll(checkSel).forEach(c => c.checked = this.checked);
+        updateBar();
+    });
+    document.querySelectorAll(checkSel).forEach(c => c.addEventListener('change', updateBar));
+
+    deleteBtn?.addEventListener('click', function() {
+        const checked = getChecked();
+        if (!checked.length) return;
+        const msg = confirmMsg.replace('{n}', checked.length);
+        if (!confirm(msg)) return;
+        checked.forEach(c => {
+            const inp = document.createElement('input');
+            inp.type = 'hidden'; inp.name = 'ids[]'; inp.value = c.value;
+            deleteForm.appendChild(inp);
+        });
+        deleteForm.submit();
+    });
+}
+</script>
 </body>
 </html>

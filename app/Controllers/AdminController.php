@@ -501,4 +501,45 @@ class AdminController extends Controller
         }
         $this->redirect($_SERVER['HTTP_REFERER'] ?? APP_URL . '/admin/callers');
     }
+
+    private function bulkDeleteUsers(array $ids, string $redirectUrl): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+        $ids = array_values(array_filter(array_map('intval', $ids)));
+        if (empty($ids)) { $this->redirect($redirectUrl); return; }
+
+        $ph = implode(',', array_fill(0, count($ids), '?'));
+        $db = \Database::getInstance();
+        $db->prepare("DELETE FROM commissions WHERE caller_id IN ($ph)")->execute($ids);
+        $db->prepare("DELETE FROM deals       WHERE caller_id IN ($ph)")->execute($ids);
+        $db->prepare("DELETE FROM users       WHERE id         IN ($ph)")->execute($ids);
+
+        Session::flash('success', count($ids) . ' εγγραφές διαγράφηκαν.');
+        $this->redirect($redirectUrl);
+    }
+
+    public function bulkDeleteCallers(): void
+    {
+        $this->bulkDeleteUsers(
+            (array)($_POST['ids'] ?? []),
+            APP_URL . '/admin/callers'
+        );
+    }
+
+    public function bulkDeleteDevelopers(): void
+    {
+        $this->bulkDeleteUsers(
+            (array)($_POST['ids'] ?? []),
+            APP_URL . '/admin/developers'
+        );
+    }
+
+    public function bulkDeletePartners(): void
+    {
+        $this->bulkDeleteUsers(
+            (array)($_POST['ids'] ?? []),
+            APP_URL . '/admin/partners'
+        );
+    }
 }

@@ -1,4 +1,9 @@
-<?php require_once __DIR__ . '/../../_partials/gr_helpers.php'; ?>
+<?php require_once __DIR__ . '/../../_partials/gr_helpers.php'; use App\Core\CSRF; ?>
+<div class="d-flex justify-content-end align-items-center mt-2 mb-3">
+    <button type="button" class="btn btn-danger btn-sm d-none" id="bulkDeleteBtn">
+        <i class="bi bi-trash me-1"></i>Διαγραφή Επιλεγμένων (<span id="bulkCount">0</span>)
+    </button>
+</div>
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
@@ -26,11 +31,15 @@
     <div class="card-body p-0">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
-                <tr><th>#</th><th>Επιχείρηση</th><th>Τηλεφωνητής</th><th>Υπηρεσία</th><th>Ποσό</th><th>Κατάσταση</th><th>Ημερομηνία</th><th>Ενέργειες</th></tr>
+                <tr>
+                <th style="width:36px"><input type="checkbox" id="checkAll" class="form-check-input"></th>
+                <th>#</th><th>Επιχείρηση</th><th>Τηλεφωνητής</th><th>Υπηρεσία</th><th>Ποσό</th><th>Κατάσταση</th><th>Ημερομηνία</th><th>Ενέργειες</th>
+            </tr>
             </thead>
             <tbody>
             <?php foreach ($data as $d): ?>
             <tr>
+                <td><input type="checkbox" class="form-check-input row-check" value="<?= $d['id'] ?>"></td>
                 <td class="text-muted small">#<?= $d['id'] ?></td>
                 <td class="fw-semibold"><?= htmlspecialchars($d['company_name']) ?></td>
                 <td><?= htmlspecialchars($d['caller_name']) ?></td>
@@ -41,7 +50,7 @@
                 <td><a href="<?= APP_URL ?>/admin/deals/<?= $d['id'] ?>" class="btn btn-xs btn-outline-primary">Προβολή</a></td>
             </tr>
             <?php endforeach ?>
-            <?php if(empty($data)): ?><tr><td colspan="8" class="text-center py-4 text-muted">Δεν βρέθηκαν συμφωνίες.</td></tr><?php endif ?>
+            <?php if(empty($data)): ?><tr><td colspan="9" class="text-center py-4 text-muted">Δεν βρέθηκαν συμφωνίες.</td></tr><?php endif ?>
             </tbody>
         </table>
     </div>
@@ -51,3 +60,12 @@
 <?php function dealBadge(string $s): string {
     return match($s) { 'pending'=>'bg-warning text-dark','approved'=>'bg-success','rejected'=>'bg-danger','in_progress'=>'bg-primary','completed'=>'bg-info text-dark', default=>'bg-secondary' };
 } ?>
+<form id="bulkDeleteForm" method="POST" action="<?= APP_URL ?>/admin/deals/bulk-delete" class="d-none">
+    <?= CSRF::field() ?>
+</form>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initBulkDelete('.row-check', 'checkAll', 'bulkCount', 'bulkDeleteBtn', 'bulkDeleteForm',
+        'Διαγραφή {n} συμφωνιών; Θα διαγραφούν επίσης οι προμήθειές τους. Η ενέργεια είναι μόνιμη.');
+});
+</script>

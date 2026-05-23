@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../_partials/gr_helpers.php';
         <a href="<?= APP_URL ?>/admin/businesses/create" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Προσθήκη Επιχείρησης</a>
         <a href="<?= APP_URL ?>/admin/import" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel me-1"></i>Εισαγωγή Excel</a>
         <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkModal"><i class="bi bi-people me-1"></i>Μαζική Ανάθεση</button>
+        <button type="button" class="btn btn-danger btn-sm d-none" id="bulkDeleteBtn"><i class="bi bi-trash me-1"></i>Διαγραφή Επιλεγμένων (<span id="bulkCount">0</span>)</button>
     </div>
 </div>
 
@@ -151,9 +152,21 @@ function statusBadge(string $status): string {
 }
 ?>
 <script>
-document.getElementById('checkAll')?.addEventListener('change', function() {
+const checkAll  = document.getElementById('checkAll');
+const countEl   = document.getElementById('bulkCount');
+const deleteBtn = document.getElementById('bulkDeleteBtn');
+
+function updateBulkBar() {
+    const n = document.querySelectorAll('.biz-check:checked').length;
+    countEl.textContent = n;
+    deleteBtn.classList.toggle('d-none', n === 0);
+}
+checkAll?.addEventListener('change', function() {
     document.querySelectorAll('.biz-check').forEach(c => c.checked = this.checked);
+    updateBulkBar();
 });
+document.querySelectorAll('.biz-check').forEach(c => c.addEventListener('change', updateBulkBar));
+
 document.getElementById('assignMode')?.addEventListener('change', function() {
     document.getElementById('randomQtyDiv').classList.toggle('d-none', this.value !== 'random');
 });
@@ -166,4 +179,20 @@ document.querySelector('[data-bs-target="#bulkModal"]')?.addEventListener('click
         container.appendChild(i);
     });
 });
+
+deleteBtn?.addEventListener('click', function() {
+    const checked = document.querySelectorAll('.biz-check:checked');
+    if (!checked.length) return;
+    if (!confirm('Διαγραφή ' + checked.length + ' επιχειρήσεων; Θα διαγραφούν επίσης οι συμφωνίες και αναθέσεις τους. Η ενέργεια είναι μόνιμη.')) return;
+    const form = document.getElementById('bulkDeleteForm');
+    checked.forEach(c => {
+        const inp = document.createElement('input');
+        inp.type = 'hidden'; inp.name = 'ids[]'; inp.value = c.value;
+        form.appendChild(inp);
+    });
+    form.submit();
+});
 </script>
+<form id="bulkDeleteForm" method="POST" action="<?= APP_URL ?>/admin/businesses/bulk-delete" class="d-none">
+    <?= CSRF::field() ?>
+</form>
