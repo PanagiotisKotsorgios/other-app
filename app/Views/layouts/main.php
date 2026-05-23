@@ -63,6 +63,8 @@
         <?php navLink(APP_URL.'/admin/commissions','currency-euro','Προμήθειες',$path) ?>
         <?php navLink(APP_URL.'/admin/financials','graph-up-arrow','Οικονομικές Αναφορές',$path) ?>
 
+        <?php navLink(APP_URL.'/admin/marketing','rocket-takeoff','Σχέδιο Marketing',$path) ?>
+
         <li class="sidebar-section">Άλλα</li>
         <li>
             <a href="<?= APP_URL ?>/admin/messages" class="nav-link <?= str_contains($path,'messages')?'active':'' ?>">

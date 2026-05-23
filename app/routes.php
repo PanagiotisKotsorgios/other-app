@@ -120,6 +120,9 @@ $router->get('/admin/invoices',                             'DocumentController@
 $router->post('/admin/documents/invoices/{id}/mark-paid',   'DocumentController@markInvoicePaid');
 $router->post('/admin/documents/invoices/{id}/update',      'DocumentController@updateInvoice');
 
+// ── Admin: Marketing ──────────────────────────────────────
+$router->get('/admin/marketing', 'MarketingController@plan');
+
 // ── Admin: Financials ─────────────────────────────────────
 $router->get('/admin/financials',                           'FinancialController@dashboard');
 $router->get('/admin/financials/expenses',                  'FinancialController@expenses');
