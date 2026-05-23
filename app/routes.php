@@ -65,6 +65,7 @@ $router->get('/admin/businesses/create',         'BusinessController@create');
 $router->post('/admin/businesses',               'BusinessController@store');
 $router->post('/admin/businesses/bulk-assign',   'BusinessController@bulkAssign');
 $router->post('/admin/businesses/bulk-delete',   'BusinessController@bulkDelete');
+$router->post('/admin/businesses/wipe-all',      'BusinessController@wipeAll');
 $router->get('/admin/businesses/{id}',           'BusinessController@show');
 $router->get('/admin/businesses/{id}/edit',      'BusinessController@edit');
 $router->post('/admin/businesses/{id}/update',   'BusinessController@update');

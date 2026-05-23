@@ -180,6 +180,22 @@ class BusinessController extends Controller
         ]);
     }
 
+    public function wipeAll(): void
+    {
+        Auth::requireAdmin();
+        CSRF::check();
+        if (($_POST['confirm_text'] ?? '') !== 'ΔΙΑΓΡΑΦΗ') {
+            Session::flash('error', 'Λανθασμένη επιβεβαίωση. Η διαγραφή ακυρώθηκε.');
+            $this->redirect(APP_URL . '/admin/businesses');
+            return;
+        }
+        $db = \Database::getInstance();
+        $db->exec("DELETE FROM deals");
+        $db->exec("DELETE FROM businesses");
+        Session::flash('success', 'Όλες οι επιχειρήσεις και τα δεδομένα τους διαγράφηκαν.');
+        $this->redirect(APP_URL . '/admin/businesses');
+    }
+
     public function bulkDelete(): void
     {
         Auth::requireAdmin();

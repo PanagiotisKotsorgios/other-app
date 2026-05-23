@@ -20,22 +20,53 @@ class AdminController extends Controller
         $msgModel     = new Message();
         $expModel     = new Expense();
         $projModel    = new Project();
+        $db           = \Database::getInstance();
 
-        $dealStats    = $dealModel->adminStats();
-        $intStats     = $intModel->adminStats();
-        $commStats    = $commModel->summaryStats();
-        $expStats     = $expModel->summaryStats();
-        $projStats    = $projModel->adminProjectStats();
-        $cityStats    = $bizModel->statsPerCity();
-        $catStats     = $bizModel->statsPerCategory();
-        $ranking      = $userModel->rankingTable();
-        $revenueChart = $dealModel->revenueChart(6);
-        $activityChart= $intModel->chartData(30);
-        $owedCallers  = $commModel->owedPerCaller();
-        $unread       = $msgModel->unreadCount(Auth::id());
+        $dealStats        = $dealModel->adminStats();
+        $intStats         = $intModel->adminStats();
+        $commStats        = $commModel->summaryStats();
+        $expStats         = $expModel->summaryStats();
+        $projStats        = $projModel->adminProjectStats();
+        $cityStats        = $bizModel->statsPerCity();
+        $catStats         = $bizModel->statsPerCategory();
+        $ranking          = $userModel->rankingTable();
+        $partnerRanking   = $userModel->partnerRankingTable();
+        $revenueByMonth   = $dealModel->revenueByMonth(12);
+        $activityChart    = $intModel->chartData(30);
+        $owedCallers      = $commModel->owedPerCaller();
+        $owedPerRole      = $commModel->owedPerRole();
+        $topDeals         = $dealModel->topRevenueDeals(8);
+        $upcomingDeadlines= $projModel->upcomingDeadlines(14);
+        $unread           = $msgModel->unreadCount(Auth::id());
 
-        $totalBiz     = $bizModel->count();
-        $totalCallers = $userModel->count("role = 'caller' AND is_active = 1");
+        // Counts
+        $totalBiz        = $bizModel->count();
+        $totalCallers    = $userModel->count("role = 'caller' AND is_active = 1");
+        $totalDevelopers = $userModel->count("role = 'developer' AND is_active = 1");
+        $totalPartners   = $userModel->count("role = 'partner' AND is_active = 1");
+        $totalDeals      = $dealModel->count();
+        $unassignedBiz   = $bizModel->count("id NOT IN (SELECT business_id FROM caller_assignments)");
+
+        // Business status breakdown
+        $stmt = $db->query("SELECT status, COUNT(*) AS cnt FROM businesses GROUP BY status ORDER BY cnt DESC");
+        $bizByStatus = $stmt->fetchAll();
+
+        // Recent deals (last 10)
+        $stmt = $db->query("
+            SELECT d.id, d.amount, d.status, d.created_at,
+                   b.company_name, u.name AS caller_name,
+                   COALESCE(s.name,'—') AS service_name
+            FROM deals d
+            JOIN businesses b ON b.id = d.business_id
+            JOIN users u      ON u.id = d.caller_id
+            LEFT JOIN services s ON s.id = d.service_id
+            ORDER BY d.created_at DESC LIMIT 10
+        ");
+        $recentDeals = $stmt->fetchAll();
+
+        // Interactions this month
+        $stmt = $db->query("SELECT COUNT(*) FROM interactions WHERE MONTH(created_at)=MONTH(CURDATE()) AND YEAR(created_at)=YEAR(CURDATE())");
+        $intThisMonth = (int)$stmt->fetchColumn();
 
         // Financial summary
         $totalRevenue    = (float)($dealStats['total_revenue']  ?? 0);
@@ -44,11 +75,14 @@ class AdminController extends Controller
         $netProfit       = $totalRevenue - $totalExpenses - $totalCommOwed;
 
         $this->view('admin.dashboard', compact(
-            'dealStats', 'intStats', 'commStats', 'expStats', 'projStats',
-            'cityStats', 'catStats', 'ranking', 'revenueChart', 'activityChart',
-            'owedCallers', 'unread', 'totalBiz', 'totalCallers',
-            'totalRevenue', 'totalExpenses', 'totalCommOwed', 'netProfit'
-        ) + ['title' => 'Admin Dashboard']);
+            'dealStats','intStats','commStats','expStats','projStats',
+            'cityStats','catStats','ranking','partnerRanking',
+            'revenueByMonth','activityChart','owedCallers','owedPerRole',
+            'topDeals','recentDeals','upcomingDeadlines','bizByStatus',
+            'unread','totalBiz','totalCallers','totalDevelopers','totalPartners',
+            'totalDeals','unassignedBiz','intThisMonth',
+            'totalRevenue','totalExpenses','totalCommOwed','netProfit'
+        ) + ['title' => 'Dashboard']);
     }
 
     // ── Callers CRUD ───────────────────────────────────────────────

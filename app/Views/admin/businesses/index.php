@@ -8,6 +8,9 @@ require_once __DIR__ . '/../../_partials/gr_helpers.php';
         <a href="<?= APP_URL ?>/admin/import" class="btn btn-outline-success btn-sm"><i class="bi bi-file-earmark-excel me-1"></i>Εισαγωγή Excel</a>
         <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkModal"><i class="bi bi-people me-1"></i>Μαζική Ανάθεση</button>
         <button type="button" class="btn btn-danger btn-sm d-none" id="bulkDeleteBtn"><i class="bi bi-trash me-1"></i>Διαγραφή Επιλεγμένων (<span id="bulkCount">0</span>)</button>
+        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#wipeModal" title="Διαγραφή ΟΛΩΝ των επιχειρήσεων">
+            <i class="bi bi-nuclear me-1"></i>Καθαρισμός Όλων
+        </button>
     </div>
 </div>
 
@@ -196,3 +199,37 @@ deleteBtn?.addEventListener('click', function() {
 <form id="bulkDeleteForm" method="POST" action="<?= APP_URL ?>/admin/businesses/bulk-delete" class="d-none">
     <?= CSRF::field() ?>
 </form>
+
+<!-- Wipe All Modal -->
+<div class="modal fade" id="wipeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Ολική Διαγραφή Επιχειρήσεων</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger mb-3">
+                    <strong>ΠΡΟΕΙΔΟΠΟΙΗΣΗ:</strong> Αυτή η ενέργεια θα διαγράψει <strong>ΟΛΕΣ</strong> τις επιχειρήσεις, συμφωνίες, προμήθειες, αλληλεπιδράσεις και αναθέσεις. Είναι <strong>μόνιμη και αναντίστρεπτη</strong>.
+                </div>
+                <p class="mb-2">Για επιβεβαίωση, πληκτρολογήστε <strong>ΔΙΑΓΡΑΦΗ</strong> παρακάτω:</p>
+                <form method="POST" action="<?= APP_URL ?>/admin/businesses/wipe-all" id="wipeForm">
+                    <?= CSRF::field() ?>
+                    <input type="text" name="confirm_text" id="wipeConfirmInput" class="form-control mb-3"
+                           placeholder="ΔΙΑΓΡΑΦΗ" autocomplete="off">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ακύρωση</button>
+                        <button type="submit" id="wipeSubmitBtn" class="btn btn-danger" disabled>
+                            <i class="bi bi-trash3-fill me-1"></i>Διαγραφή Όλων
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.getElementById('wipeConfirmInput')?.addEventListener('input', function() {
+    document.getElementById('wipeSubmitBtn').disabled = this.value !== 'ΔΙΑΓΡΑΦΗ';
+});
+</script>
