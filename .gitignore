@@ -1,5 +1,6 @@
 # Environment — never commit real credentials
 .env
+.env.docker
 
 # Composer generated
 /vendor/
